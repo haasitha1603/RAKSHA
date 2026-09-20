@@ -1,0 +1,38 @@
+services:
+  # Web Service running Node.js production server with bundled PWA client
+  - type: web
+    name: raksha
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm run seed && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: raksha-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DEMO_CENTER_LAT
+        value: "28.6139"
+      - key: DEMO_CENTER_LNG
+        value: "77.2090"
+      - key: DEMO_RESPONDER_KEY
+        value: "112999"
+      - key: SMS_PROVIDER
+        value: "mock"
+
+# Managed PostgreSQL Database
+databases:
+  - name: raksha-db
+    plan: free
+    region: oregon
+    databaseName: raksha
+    user: raksha

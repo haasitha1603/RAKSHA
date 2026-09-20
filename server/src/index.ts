@@ -5,6 +5,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { Server as SocketIOServer } from 'socket.io';
 import cron from 'node-cron';
 import { config } from './config.js';
@@ -124,8 +125,15 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 // Production client static file serving
-const clientDist = path.resolve(process.cwd(), '../client/dist');
-if (fs.existsSync(clientDist)) {
+const candidateDistPaths = [
+  path.resolve(process.cwd(), '../client/dist'),
+  path.resolve(process.cwd(), 'client/dist'),
+  path.resolve(process.cwd(), '../../client/dist'),
+  path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../client/dist'),
+];
+const clientDist = candidateDistPaths.find((p) => fs.existsSync(p));
+if (clientDist) {
+  console.log(`Serving static client from: ${clientDist}`);
   app.use(express.static(clientDist));
   app.get('*', (_req: Request, res: Response) => {
     res.sendFile(path.join(clientDist, 'index.html'));
