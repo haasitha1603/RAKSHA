@@ -42,12 +42,13 @@ export const ReportsPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
 
   // New report form
-  const [category, setCategory] = useState('poor_lighting');
+  const [category, setCategory] = useState('lighting');
   const [description, setDescription] = useState('');
   const [latitude, setLatitude] = useState(12.9716);
   const [longitude, setLongitude] = useState(77.5946);
   const [locationName, setLocationName] = useState('Current Location (Bengaluru)');
   const [isAnonymous, setIsAnonymous] = useState(true);
+  const [visibilityAgreed, setVisibilityAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [suggestedCat, setSuggestedCat] = useState<string | null>(null);
 
@@ -112,10 +113,10 @@ export const ReportsPage: React.FC = () => {
         method: 'POST',
         body: JSON.stringify({
           category,
-          description,
-          latitude,
-          longitude,
-          isAnonymous,
+          text: description,
+          lat: latitude,
+          lng: longitude,
+          visibilityAgreed,
         }),
       });
 
@@ -131,7 +132,10 @@ export const ReportsPage: React.FC = () => {
 
   const handleConfirmReport = async (id: string) => {
     try {
-      await apiFetch(`/api/reports/${id}/confirm`, { method: 'POST' });
+      await apiFetch(`/api/reports/${id}/vote`, {
+        method: 'POST',
+        body: JSON.stringify({ vote: 'confirm' }),
+      });
       fetchReports();
     } catch (err) {
       console.error('Failed to confirm report:', err);
@@ -401,6 +405,19 @@ export const ReportsPage: React.FC = () => {
                   />
                   <label htmlFor="anon" className="text-xs text-text cursor-pointer select-none">
                     Submit anonymously (protect identity from public feed)
+                  </label>
+                </div>
+
+                <div className="flex items-start gap-2 p-3 bg-surface-raised rounded-xl border border-border">
+                  <input
+                    type="checkbox"
+                    id="visibilityAgreed"
+                    checked={visibilityAgreed}
+                    onChange={(e) => setVisibilityAgreed(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-primary rounded"
+                  />
+                  <label htmlFor="visibilityAgreed" className="text-xs text-text cursor-pointer select-none">
+                    I agree this report may be shown publicly in anonymised form.
                   </label>
                 </div>
 

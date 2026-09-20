@@ -176,7 +176,10 @@ export const FakeCallIncomingPage: React.FC = () => {
     setCallState('ended');
 
     try {
-      await apiFetch(`/api/fake-calls/${id}/complete`, { method: 'POST' });
+      await apiFetch(`/api/fake-calls/${id}/result`, {
+        method: 'POST',
+        body: JSON.stringify({ result: 'answered' }),
+      });
     } catch (err) {
       console.error(err);
     }

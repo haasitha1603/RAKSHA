@@ -58,7 +58,10 @@ export const FakeCallStandbyPage: React.FC = () => {
 
     const timer = setInterval(() => {
       const now = Date.now();
-      const diff = Math.max(0, Math.ceil((call.scheduled_for - now) / 1000));
+      const scheduledAt = typeof call.scheduled_for === 'number'
+        ? call.scheduled_for
+        : new Date(call.scheduled_for).getTime();
+      const diff = Math.max(0, Math.ceil((scheduledAt - now) / 1000));
       setSecondsRemaining(diff);
 
       if (diff <= 0) {

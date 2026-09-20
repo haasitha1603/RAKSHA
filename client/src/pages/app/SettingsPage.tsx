@@ -94,7 +94,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleExportData = async () => {
     try {
-      const res = await apiFetch<any>('/api/auth/export');
+      const res = await apiFetch<any>('/api/me/export');
       const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(res, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute('href', dataStr);
