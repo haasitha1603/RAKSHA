@@ -77,3 +77,64 @@ mapsRouter.get('/safety/layers', (req: Request, res: Response) => {
     facilities,
   });
 });
+
+mapsRouter.get('/safety/point', async (req: Request, res: Response) => {
+  const lat = parseFloat(req.query.lat as string);
+  const lng = parseFloat(req.query.lng as string);
+
+  if (isNaN(lat) || isNaN(lng)) {
+    res.status(400).json({ error: { code: 'INVALID_COORDS', message: 'Valid lat and lng required' } });
+    return;
+  }
+
+  // Find nearby facilities within 1500m
+  const facilities = await fetchNearbyFacilities(lat, lng, 1500, ['police', 'hospital', 'safe_place']);
+  const openFacilities = facilities.filter(f => f.is_24x7);
+
+  // Lighting zones near point
+  const lightingZones = db.prepare(`
+    SELECT level, (
+      (lat - ?) * (lat - ?) + (lng - ?) * (lng - ?)
+    ) as dist_sq FROM lighting_zones ORDER BY dist_sq ASC LIMIT 3
+  `).all(lat, lat, lng, lng) as { level: number; dist_sq: number }[];
+
+  const avgLighting = lightingZones.length > 0
+    ? lightingZones.reduce((acc, z) => acc + z.level, 0) / lightingZones.length
+    : 0.6;
+
+  // Nearby risk zones
+  const nearbyRisks = db.prepare(`
+    SELECT category, severity, (
+      (lat - ?) * (lat - ?) + (lng - ?) * (lng - ?)
+    ) as dist_sq FROM risk_zones WHERE dist_sq < 0.0001 ORDER BY severity DESC LIMIT 2
+  `).all(lat, lat, lng, lng) as { category: string; severity: number }[];
+
+  // Calculate score
+  let score = 80;
+  if (avgLighting > 0.7) score += 8;
+  else if (avgLighting < 0.4) score -= 15;
+
+  if (openFacilities.length >= 2) score += 6;
+  else if (openFacilities.length === 1) score += 3;
+
+  if (nearbyRisks.length > 0) score -= (nearbyRisks[0].severity * 5);
+
+  score = Math.max(20, Math.min(96, Math.round(score)));
+
+  let label: 'High' | 'Moderate' | 'Low' = 'Moderate';
+  if (score >= 75) label = 'High';
+  else if (score < 50) label = 'Low';
+
+  const lightDesc = avgLighting >= 0.65 ? 'Well-lit' : avgLighting >= 0.4 ? 'Moderate lighting' : 'Dim lighting';
+  const facDesc = openFacilities.length > 0 ? `${openFacilities.length} open safe place${openFacilities.length > 1 ? 's' : ''} nearby` : 'Limited nearby facilities';
+  const summary = `${lightDesc}, ${facDesc}`;
+
+  res.json({
+    score,
+    label,
+    lighting: avgLighting,
+    lightingDesc: lightDesc,
+    openFacilitiesCount: openFacilities.length,
+    summary,
+  });
+});

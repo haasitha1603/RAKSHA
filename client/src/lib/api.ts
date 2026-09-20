@@ -1,11 +1,13 @@
 export class ApiError extends Error {
   code: string;
+  status: number;
   details?: any;
 
-  constructor(code: string, message: string, details?: any) {
+  constructor(code: string, message: string, status: number, details?: any) {
     super(message);
     this.name = 'ApiError';
     this.code = code;
+    this.status = status;
     this.details = details;
   }
 }
@@ -37,7 +39,7 @@ export async function apiFetch<T = any>(
     const errObj = data?.error;
     const code = errObj?.code || `HTTP_${res.status}`;
     const message = errObj?.message || (typeof data === 'string' ? data : 'An error occurred');
-    throw new ApiError(code, message, errObj?.details);
+    throw new ApiError(code, message, res.status, errObj?.details);
   }
 
   return data as T;

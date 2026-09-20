@@ -1,0 +1,392 @@
+[
+  {
+    "id": "kb_01",
+    "whatIfNumber": 1,
+    "category": "Journey Safety",
+    "title": "What happens if I deviate from my planned route?",
+    "summary": "How Raksha handles route detours, shortcuts, and unauthorized diversions.",
+    "content": "If your live GPS position strays more than 150 meters from the selected polyline for more than 45 seconds (or 8 seconds in simulation timing), Raksha detects a route deviation anomaly. If you are entering a high-risk or unlit area, a Level 2 Safety Check prompt is triggered asking 'Are you safe?'. If you confirm within the countdown window, your journey adapts to your new trajectory without alerting guardians. If unacknowledged, Raksha escalates to your guardians.",
+    "tags": ["deviation", "route", "safety check", "gps", "shortcut"]
+  },
+  {
+    "id": "kb_02",
+    "whatIfNumber": 2,
+    "category": "Journey Safety",
+    "title": "What happens if I make an unexpected stop in an isolated area?",
+    "summary": "How stationary pauses in dark or isolated zones are handled.",
+    "content": "If you remain stationary for more than 3 minutes outside a planned stop in an area with high isolation or low lighting, Raksha triggers a vibration alert and on-screen safety check. If you are simply delayed (e.g. talking to a friend or buying coffee), tap 'I am Safe'. If unconfirmed within 2 minutes, emergency coordination initiates.",
+    "tags": ["stop", "stationary", "delay", "isolated area", "pause"]
+  },
+  {
+    "id": "kb_03",
+    "whatIfNumber": 3,
+    "category": "Journey Safety",
+    "title": "What if my phone battery drops dangerously low during a journey?",
+    "summary": "Automatic low-battery notifications to guardians before device shutoff.",
+    "content": "When your phone battery drops below 15% and then below 10% during an active journey, Raksha automatically transmits a 'Low Battery Advisory' packet to your designated guardians via SMS and web telemetry. The message includes your exact current coordinates, remaining battery percentage, and planned destination so guardians are informed before your phone powers off.",
+    "tags": ["battery", "low power", "shutoff", "hardware", "guardians"]
+  },
+  {
+    "id": "kb_04",
+    "whatIfNumber": 4,
+    "category": "Technical & Offline",
+    "title": "What happens when I enter a cellular dead zone or lose internet?",
+    "summary": "Offline progressive web app caching and opportunistic telemetry sync.",
+    "content": "Raksha operates as a certified Progressive Web App with local caching. When connection drops, high-frequency GPS breadcrumbs continue to be sampled and stored locally in IndexedDB. If an emergency occurs offline, Raksha displays a one-tap SMS link pre-filled with your coordinates and an emergency call dialer for 112, which works on cellular voice even without data.",
+    "tags": ["offline", "cellular dead zone", "sms fallback", "indexeddb", "pwa"]
+  },
+  {
+    "id": "kb_05",
+    "whatIfNumber": 5,
+    "category": "SOS & Emergency",
+    "title": "What if I accidentally touch the SOS button while walking or jogging?",
+    "summary": "The 10-second cancellation window prevents false alarms.",
+    "content": "Raksha features a 10-second cancellation window (audible countdown and tactile vibration). If you trigger SOS by mistake, simply tap 'Cancel' and enter your 4-digit Safety PIN. No alerts are dispatched to guardians or dispatchers if cancelled within this window.",
+    "tags": ["false alarm", "cancellation window", "accidental touch", "safety pin", "hold"]
+  },
+  {
+    "id": "kb_06",
+    "whatIfNumber": 6,
+    "category": "SOS & Emergency",
+    "title": "What if an attacker coerces me into cancelling the SOS?",
+    "summary": "Stealth Duress PIN ensures silent emergency escalation under threat.",
+    "content": "Raksha provides a dedicated Duress PIN (e.g. 4321, configured during onboarding). If someone forces you to cancel the alert, enter your Duress PIN instead of your Safety PIN. The app displays a deceptive 'Emergency Alert Cancelled' screen to satisfy the assailant, but silently flags the incident with duress status and escalates live high-priority dispatch tracking to responders.",
+    "tags": ["duress pin", "coercion", "stealth emergency", "silent escalation", "assailant"]
+  },
+  {
+    "id": "kb_07",
+    "whatIfNumber": 7,
+    "category": "SOS & Emergency",
+    "title": "What is the difference between Discreet SOS and Loud SOS?",
+    "summary": "Choosing between stealth emergency coordination and loud deterrent alarms.",
+    "content": "Discreet SOS dims your screen to a neutral battery-saver style UI, suppresses all sounds and flashes, and silently streams your coordinates, battery, and voice evidence to your guardians. Loud SOS engages a high-decibel pulsating siren, screen strobe, and immediate dispatch alerts to deter an attacker in a public area.",
+    "tags": ["discreet sos", "loud sos", "siren", "strobe", "stealth mode"]
+  },
+  {
+    "id": "kb_08",
+    "whatIfNumber": 8,
+    "category": "Guardians & Sharing",
+    "title": "What happens if a guardian does not pick up or read SMS alerts?",
+    "summary": "Parallel redundancy and multi-channel escalation.",
+    "content": "Emergency alerts are never sent to a single person. Raksha notifies all configured primary and secondary guardians simultaneously via SMS and Web Push, alongside nearby responder consoles. If a guardian does not acknowledge within 2 minutes, secondary contacts receive follow-up urgent reminder notifications.",
+    "tags": ["guardian acknowledgment", "sms delivery", "redundancy", "unresponsive guardian"]
+  },
+  {
+    "id": "kb_09",
+    "whatIfNumber": 9,
+    "category": "SOS & Emergency",
+    "title": "How does police and emergency coordination work?",
+    "summary": "Simulated multi-agency dispatch and real-world 112 integration.",
+    "content": "In this system environment, responder console notifications to police and hospital desks are simulated to demonstrate parallel emergency packet delivery. In real emergencies, always dial 112 directly. Raksha's Emergency Bridge generates structured packets with reverse-geocoded landmarks, speed, and contact info to speed up response.",
+    "tags": ["police", "112", "responder console", "emergency packet", "dispatch"]
+  },
+  {
+    "id": "kb_10",
+    "whatIfNumber": 10,
+    "category": "SOS & Emergency",
+    "title": "How does Raksha handle repeat false alarms?",
+    "summary": "False alarm threshold management and safety warnings.",
+    "content": "If multiple false alarms occur within a short time window, Raksha tracks a false alarm counter. While Raksha will NEVER block a genuine emergency request, it provides guidance on adjusting trigger sensitivity (e.g. increasing SOS hold duration from 1.5s to 3s or disabling shake trigger).",
+    "tags": ["false alarm", "sensitivity", "trigger setting", "counter"]
+  },
+  {
+    "id": "kb_11",
+    "whatIfNumber": 11,
+    "category": "Journey Safety",
+    "title": "How does Raksha prevent spam or fake community hazard reports?",
+    "summary": "Exponential half-life decay and multi-user geographic corroboration.",
+    "content": "All crowdsourced safety reports require community confirmation. Unverified single reports start with low confidence (0.25). Reports experience mathematical exponential decay (half-life of 24 to 72 hours depending on hazard type). If multiple independent users flag or deny a report, it is quarantined automatically.",
+    "tags": ["community reports", "spam prevention", "decay", "corroboration", "moderation"]
+  },
+  {
+    "id": "kb_12",
+    "whatIfNumber": 12,
+    "category": "Technical & Offline",
+    "title": "What happens if GPS glitches and jumps unexpectedly?",
+    "summary": "Kalman-inspired velocity jump filtering prevents false anomalies.",
+    "content": "Mobile GPS can occasionally jump hundreds of meters due to urban canyon reflections. Raksha's telemetry processor ignores instantaneous speed spikes exceeding 70 m/s unless corroborated by consecutive GPS fixes, preventing false deviation or crash alarms.",
+    "tags": ["gps jump", "multipath", "glitch filter", "telemetry", "accuracy"]
+  },
+  {
+    "id": "kb_13",
+    "whatIfNumber": 13,
+    "category": "Fake Calls",
+    "title": "How does the Discreet Fake Call generator work?",
+    "summary": "Realistic incoming phone call with interactive speech synthesis.",
+    "content": "The Fake Call generator creates a simulated incoming call with customizable caller ID ('Mom', 'Police Officer', 'Cab Company'), selectable ringtones, and realistic multi-turn voice dialogues powered by Web Speech synthesis. Natural conversational pauses give you time to speak back and create a plausible exit pretext.",
+    "tags": ["fake call", "speech synthesis", "exit pretext", "caller id", "ringtone"]
+  },
+  {
+    "id": "kb_14",
+    "whatIfNumber": 14,
+    "category": "Privacy & Data",
+    "title": "What is the Calculator Decoy screen?",
+    "summary": "A fully working calculator concealing safety telemetry.",
+    "content": "If someone demands to inspect your phone, switch to the Decoy Calculator via the quick menu. It is a genuine, working arithmetic calculator with addition, subtraction, multiplication, and division. Your active journey tracking and emergency bridge continue running in the background. Long-pressing '=' returns to the app.",
+    "tags": ["calculator decoy", "stealth", "concealment", "inspection", "privacy"]
+  },
+  {
+    "id": "kb_15",
+    "whatIfNumber": 15,
+    "category": "Privacy & Data",
+    "title": "Who can see my live location and for how long?",
+    "summary": "Strict unbundled consent and cryptographic time-limited tokens.",
+    "content": "Your live location is never public. Only guardians who possess a unique cryptographic link (`/g/:token`) can view your active journey. Links expire automatically 1 hour after journey completion. GPS breadcrumbs are permanently purged from the database after 30 days.",
+    "tags": ["privacy", "location sharing", "retention", "expiry", "tokens"]
+  },
+  {
+    "id": "kb_16",
+    "whatIfNumber": 16,
+    "category": "Guardians & Sharing",
+    "title": "Can I add a guardian without informing them?",
+    "summary": "Mandatory consent confirmation for trusted guardians.",
+    "content": "No. When inviting a guardian, Raksha requires explicit confirmation that you have informed them and obtained their verbal or written consent. This prevents unexpected panic or alert confusion during actual emergencies.",
+    "tags": ["guardian consent", "invitation", "ethics", "transparency"]
+  },
+  {
+    "id": "kb_17",
+    "whatIfNumber": 17,
+    "category": "Technical & Offline",
+    "title": "Can Raksha send silent SMS without my permission in the browser?",
+    "summary": "Browser security limitations and honest protocol handling.",
+    "content": "Web browsers do not permit silent background SMS transmission without a native user gesture. In full connectivity, alerts are dispatched server-side via SMS APIs. When offline, Raksha opens your phone's native messaging client (`sms:`) pre-populated with emergency text and coordinates for one-tap delivery.",
+    "tags": ["browser limitations", "sms protocol", "native web", "security"]
+  },
+  {
+    "id": "kb_18",
+    "whatIfNumber": 18,
+    "category": "Guardians & Sharing",
+    "title": "Does my guardian need to download an app or create an account?",
+    "summary": "Zero-friction web guardian stream via private magic link.",
+    "content": "No! Guardians do not need to create an account, install an app, or remember a password. The private magic link (`/g/:token`) opens directly in any standard mobile or desktop web browser, showing a live interactive map, battery level, ETA, and emergency contacts.",
+    "tags": ["guardian view", "magic link", "no install", "browser view"]
+  },
+  {
+    "id": "kb_19",
+    "whatIfNumber": 19,
+    "category": "SOS & Emergency",
+    "title": "What happens if I tap SOS multiple times in rapid succession?",
+    "summary": "Idempotent session reuse avoids creating duplicate emergency incidents.",
+    "content": "Rapid repeated taps on SOS do not flood responders with conflicting incidents. Raksha detects active pending emergency sessions and binds subsequent events to the existing incident, updating latest coordinates and severity without blocking your access.",
+    "tags": ["idempotency", "sos rate limit", "duplicate incident", "active session"]
+  },
+  {
+    "id": "kb_20",
+    "whatIfNumber": 20,
+    "category": "Technical & Offline",
+    "title": "How does Raksha minimize battery drain during long journeys?",
+    "summary": "Adaptive geolocation sampling based on motion state.",
+    "content": "Raksha uses an adaptive sampling algorithm: every 10 seconds while in continuous motion, scaling back to 30 seconds when stationary, and increasing to 5 seconds only during an active Level 2 check or Level 3 emergency. This provides up to 6 hours of continuous monitoring on standard mobile batteries.",
+    "tags": ["battery efficiency", "adaptive sampling", "power saving", "motion detection"]
+  },
+  {
+    "id": "kb_21",
+    "whatIfNumber": 21,
+    "category": "SOS & Emergency",
+    "title": "How does Voice-Activated SOS work?",
+    "summary": "Discreet speech recognition for emergency triggers.",
+    "content": "When enabled in Settings, Raksha uses the Web Speech API to listen for specific distress phrases (such as 'help help' or 'raksha emergency'). To protect battery and privacy, speech recognition only runs while an active journey is in progress and audio is processed on-device.",
+    "tags": ["voice sos", "speech recognition", "hands-free", "phrase trigger"]
+  },
+  {
+    "id": "kb_22",
+    "whatIfNumber": 22,
+    "category": "SOS & Emergency",
+    "title": "How does Shake-to-SOS work without false positives?",
+    "summary": "Tri-axial accelerometer peak pattern detection.",
+    "content": "The motion sensor detects rapid acceleration cycles: 3 distinct acceleration peaks exceeding 15 m/s² within a 1.5-second window. Normal movements such as walking, jogging, or running downstairs do not trigger the threshold.",
+    "tags": ["shake sos", "accelerometer", "motion", "gesture trigger"]
+  },
+  {
+    "id": "kb_23",
+    "whatIfNumber": 23,
+    "category": "Journey Safety",
+    "title": "How does the 'Nearest Safe Place' feature work?",
+    "summary": "Instant routing to 24x7 stores, police kiosks, and hospitals.",
+    "content": "With one tap on the Dashboard, Raksha queries OpenStreetMap and certified database records for verified facilities within 5 km that are open 24x7. It computes the safest walking or driving route directly to that safe sanctuary.",
+    "tags": ["nearest safe place", "sanctuary", "24x7", "police booth", "safe haven"]
+  },
+  {
+    "id": "kb_24",
+    "whatIfNumber": 24,
+    "category": "Journey Safety",
+    "title": "Can I record cab and driver details for my journey?",
+    "summary": "Cab license plate, driver name, and provider tracking.",
+    "content": "Yes. When planning a journey by car or transit, you can enter the vehicle registration plate, driver name, and cab company (e.g. Uber, Ola, Auto). This information is encrypted and transmitted in emergency packets to guardians and responders.",
+    "tags": ["cab details", "vehicle number", "driver info", "rideshare safety"]
+  },
+  {
+    "id": "kb_25",
+    "whatIfNumber": 25,
+    "category": "Journey Safety",
+    "title": "How does night time affect the Route Safety Score?",
+    "summary": "Time-of-day risk multipliers in the routing engine.",
+    "content": "Between 22:00 and 05:00, the night risk multiplier is set to 1.0 (maximum penalty for unlit segments and past isolated incidents). During twilight hours (19:00-22:00 and 05:00-07:00), the multiplier is 0.5. During daytime (07:00-19:00), it drops to 0.1.",
+    "tags": ["night factor", "time of day", "routing engine", "risk weights"]
+  },
+  {
+    "id": "kb_26",
+    "whatIfNumber": 26,
+    "category": "Journey Safety",
+    "title": "How is street lighting estimated on routes?",
+    "summary": "OpenStreetMap highway tags, lit attributes, and lighting zones.",
+    "content": "Raksha checks highway classifications (primary roads, residential streets, footpaths) and OSM `lit=yes/no` tags. It intersects route segments with empirical lighting zones (0.0=pitch black, 1.0=floodlit arterial). Risky stretches with low lighting are marked clearly in amber or red.",
+    "tags": ["street lighting", "lighting zones", "osm", "dark spots"]
+  },
+  {
+    "id": "kb_27",
+    "whatIfNumber": 27,
+    "category": "SOS & Emergency",
+    "title": "What data is included in the Hospital Casualty Packet?",
+    "summary": "Structured medical and trauma triage information.",
+    "content": "The hospital responder packet includes the exact incident timestamp, geographic coordinates with reverse-geocoded address, user age verification status, battery level, speed, and emergency contact numbers. Personal medical history is never shared without explicit consent.",
+    "tags": ["hospital packet", "casualty", "triage", "emergency bridge"]
+  },
+  {
+    "id": "kb_28",
+    "whatIfNumber": 28,
+    "category": "Privacy & Data",
+    "title": "How do I export all my personal data from Raksha?",
+    "summary": "Full self-serve data portability in JSON format.",
+    "content": "Go to Settings > Data Portability & Export. Tap 'Download My Data' to instantly download a comprehensive JSON archive containing your profile details, consents, guardian configurations, journey logs, and report history.",
+    "tags": ["data export", "portability", "json archive", "gdpr", "dpdp"]
+  },
+  {
+    "id": "kb_29",
+    "whatIfNumber": 29,
+    "category": "Privacy & Data",
+    "title": "How does account deletion work?",
+    "summary": "Irreversible hard delete with foreign key cascade erasure.",
+    "content": "Under Settings > Danger Zone, enter your account password and confirm deletion. Raksha executes a permanent database cascade delete: your user profile, active sessions, push subscriptions, past journeys, breadcrumbs, and guardian links are permanently wiped.",
+    "tags": ["account deletion", "hard delete", "cascade delete", "right to be forgotten"]
+  },
+  {
+    "id": "kb_30",
+    "whatIfNumber": 30,
+    "category": "Journey Safety",
+    "title": "What can Raksha guarantee, and what can it not guarantee?",
+    "summary": "Honest framing of technological capabilities and limitations.",
+    "content": "Raksha provides data-informed route recommendations and rapid parallel notification coordination. It CANNOT physically guarantee 100% safety, predict random spontaneous attacks, or force municipal emergency responders to arrive. In real emergencies, always dial 112 directly.",
+    "tags": ["honest claims", "guarantees", "limitations", "112 helpline"]
+  },
+  {
+    "id": "kb_31",
+    "category": "Guardians & Sharing",
+    "title": "How do I invite and configure trusted guardians?",
+    "summary": "Setting up your safety circle with names, relations, and phone numbers.",
+    "content": "Navigate to the Guardians tab. Tap '+ Add Guardian', enter their name, phone number, and relation (e.g. Mother, Partner, Roommate). Once saved, copy the unique magic link or send them an SMS invite. Guardians can be prioritized from 1 to 5.",
+    "tags": ["add guardian", "safety circle", "magic link", "priority"]
+  },
+  {
+    "id": "kb_32",
+    "category": "SOS & Emergency",
+    "title": "What is the Safety PIN and how do I change it?",
+    "summary": "The 4-digit code used to dismiss false alarms.",
+    "content": "Your Safety PIN is a 4-digit number (e.g. 1234) used to dismiss Level 2 Safety Checks and cancel SOS alerts. You configure it during onboarding and can change it anytime in Settings under PIN Configuration.",
+    "tags": ["safety pin", "change pin", "dismiss alarm", "pin configuration"]
+  },
+  {
+    "id": "kb_33",
+    "category": "Journey Safety",
+    "title": "How is the Route Safety Score calculated from 0 to 100?",
+    "summary": "Mathematical formula combining crime, lighting, isolation, and reports.",
+    "content": "Routes are sampled every 100 meters. The score combines five core factors: historical incident proximity (35%), street lighting coverage (25%), crowd and isolation level (20%), verified community reports (15%), and emergency facility coverage (5%), weighted by time of day.",
+    "tags": ["safety score", "formula", "sampling", "risk factors"]
+  },
+  {
+    "id": "kb_34",
+    "category": "Journey Safety",
+    "title": "How does the Safety Priority Slider work in Route Planning?",
+    "summary": "Balancing travel speed against maximum safety.",
+    "content": "On the Route Planning screen, the Safety Priority slider ranges from 0 (Fastest Route) to 100 (Safest Route). At 50-60, it recommends balanced routes. At 100, it selects well-lit arterial avenues even if they require a 10-15% longer walking distance.",
+    "tags": ["safety slider", "route planning", "balance", "fastest vs safest"]
+  },
+  {
+    "id": "kb_35",
+    "category": "Journey Safety",
+    "title": "What happens when I tap 'I am Safe' on a safety check?",
+    "summary": "Instant dismissal and telemetry re-baselining.",
+    "content": "Tapping 'I am Safe' immediately dismisses the prompt, logs an 'acknowledged_safe' event, and resets the deviation or stop timer. Your journey continues normally with zero disturbance to your guardians.",
+    "tags": ["safety check", "i am safe", "reset timer", "acknowledgment"]
+  },
+  {
+    "id": "kb_36",
+    "category": "Technical & Offline",
+    "title": "How do Web Push notifications work in Raksha?",
+    "summary": "VAPID key subscriptions for background safety check reminders.",
+    "content": "Raksha uses the standard W3C Push API with VAPID encryption. When permitted by your browser, safety checks and guardian acknowledgments arrive as native push notifications even when the app is running in the background.",
+    "tags": ["web push", "vapid", "notifications", "background alert"]
+  },
+  {
+    "id": "kb_37",
+    "category": "Technical & Offline",
+    "title": "What are the web browser background limitations?",
+    "summary": "Keeping your journey active when the screen locks.",
+    "content": "Modern mobile web browsers (Safari iOS, Chrome Android) throttle JavaScript when the screen is locked. Raksha uses the Web Wake Lock API and audio keep-alive channels during active journeys to keep background location monitoring alive.",
+    "tags": ["wake lock", "background throttling", "browser limits", "ios safari"]
+  },
+  {
+    "id": "kb_38",
+    "category": "SOS & Emergency",
+    "title": "What emergency helpline numbers are supported in India?",
+    "summary": "Key national and women's emergency hotlines.",
+    "content": "Key Indian emergency hotlines integrated into Raksha include: 112 (National Emergency Helpline for Police, Fire, Ambulance), 1091 (Women Distress Helpline), 181 (Women Helpline Domestic Abuse), 108 (Emergency Ambulance), 100 (Police Control Room), and 1098 (Child Helpline).",
+    "tags": ["emergency numbers", "112", "1091", "181", "108", "india"]
+  },
+  {
+    "id": "kb_39",
+    "category": "Fake Calls",
+    "title": "How do I customize Fake Call scripts and audio voices?",
+    "summary": "Choosing conversational dialogues and caller personalities.",
+    "content": "Go to the Fake Call tab. Choose from preset scripts (e.g. 'Family Check-in', 'Work Colleague', 'Police Follow-up', 'Cab Driver Waiting') or write your own lines with custom pause durations between sentences.",
+    "tags": ["custom script", "fake call dialog", "voice customization"]
+  },
+  {
+    "id": "kb_40",
+    "category": "Journey Safety",
+    "title": "How do I submit a community safety report responsibly?",
+    "summary": "Reporting street hazards, broken lights, and harassment.",
+    "content": "Navigate to the Reports tab and tap 'Submit Report'. Choose an accurate category (e.g. Broken Streetlight, Road Hazard, Harassment, Suspicious Activity), set the severity from 1 to 5, and pinpoint the location on the map. Do not include personal names or defamatory statements.",
+    "tags": ["submit report", "community safety", "street hazard", "broken light"]
+  },
+  {
+    "id": "kb_41",
+    "category": "Journey Safety",
+    "title": "How do upvotes and downvotes affect community reports?",
+    "summary": "Crowdsourced validation of safety incidents.",
+    "content": "Other travellers who visit the area can tap 'Confirm' or 'Deny' on a report. Multiple confirmations boost the report's confidence score to 'Likely' or 'Verified', while denials accelerate its expiration and remove false reports.",
+    "tags": ["upvote", "confirm", "deny", "community verification"]
+  },
+  {
+    "id": "kb_42",
+    "category": "Journey Safety",
+    "title": "How are street lighting levels scored from 0.0 to 1.0?",
+    "summary": "Understanding the visual lighting overlay on the map.",
+    "content": "Lighting levels indicate street illumination: 0.0-0.3 indicates unlit lanes or broken lights (rendered dark purple/red), 0.4-0.6 indicates standard residential lighting (amber), and 0.7-1.0 indicates bright commercial boulevards and high-mast lamps (bright green).",
+    "tags": ["lighting score", "illumination", "visual overlay", "map layer"]
+  },
+  {
+    "id": "kb_43",
+    "category": "Technical & Offline",
+    "title": "How do I enable high-contrast and larger text for accessibility?",
+    "summary": "WCAG 2.1 AA compliant display settings.",
+    "content": "Open Settings > Accessibility. You can switch between Dark, Light, and System themes, enable High-Contrast mode for 7:1 text contrast, and increase UI font size to Large or Extra Large for easy reading on the move.",
+    "tags": ["accessibility", "high contrast", "text size", "wcag", "dark mode"]
+  },
+  {
+    "id": "kb_44",
+    "category": "SOS & Emergency",
+    "title": "How does PulseRouteAI coordinate dispatches in parallel?",
+    "summary": "Simultaneous multi-channel notification architecture.",
+    "content": "Instead of notifying parties sequentially (calling person A, waiting, then calling person B), PulseRouteAI dispatches asynchronous network packets simultaneously to your guardians, police control rooms, and hospital casualty desks using Promise.all concurrency.",
+    "tags": ["pulserouteai", "parallel dispatch", "concurrency", "emergency bridge"]
+  },
+  {
+    "id": "kb_45",
+    "category": "Journey Safety",
+    "title": "Can I use Raksha when traveling in unfamiliar cities?",
+    "summary": "Global OpenStreetMap data and universal 112 emergency routing.",
+    "content": "Yes! Raksha's routing engine and amenity search use worldwide OpenStreetMap data. When visiting unfamiliar cities, the app dynamically ranks pedestrian paths and connects you to local emergency hotlines based on your GPS fix.",
+    "tags": ["travel", "unfamiliar city", "global osm", "navigation"]
+  }
+]

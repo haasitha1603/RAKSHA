@@ -58,12 +58,12 @@ export const REPORT_HARD_EXPIRY_HOURS: Record<string, number> = {
 };
 
 export const APPROVED_HONEST_COPY = {
-  prototypeNotice: 'Prototype: police/hospital alerts are simulated. In a real emergency call 112.',
+  simulationNotice: 'Notice: police/hospital alerts are simulated. In a real emergency call 112.',
   honestFraming:
     'Raksha notifies relevant parties simultaneously and shares structured information to reduce avoidable coordination delay. Actual response depends on local emergency services, connectivity and availability. Raksha cannot force a response.',
   riskDisclaimer:
     'Raksha estimates contextual risk and identifies situations that need a safety check or escalation. It cannot tell whether someone is being attacked.',
-  dataDisclaimer: 'Risk scores are explainable and based on the data available (demo data in this prototype).',
+  dataDisclaimer: 'Risk scores are explainable and based on the data available (sample safety data in this environment).',
   modelComparisonLabel: 'Illustrative model with adjustable assumptions — not a measured real-world result.',
 };
 

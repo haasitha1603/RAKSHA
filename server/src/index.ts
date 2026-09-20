@@ -25,9 +25,14 @@ import { fakeCallsRouter } from './routes/fakeCalls.js';
 import { responderRouter } from './routes/responder.js';
 import { demoRouter } from './routes/demo.js';
 import { pushRouter } from './routes/push.js';
+import helpRouter from './routes/help.js';
+import assistantRouter from './routes/assistant.js';
 
-const app = express();
-const server = http.createServer(app);
+export const app = express();
+export const server = http.createServer(app);
+
+// Trust first proxy (required for rate limiting & secure cookie detection behind reverse proxies/localhost)
+app.set('trust proxy', 1);
 
 // Initialize Socket.IO
 const io = new SocketIOServer(server, {
@@ -38,7 +43,7 @@ const io = new SocketIOServer(server, {
 });
 initSockets(io);
 
-// Security Headers (CSP compliant with §7.7)
+// Security Headers (CSP compliant)
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -51,15 +56,29 @@ app.use(
         fontSrc: ["'self'"],
         workerSrc: ["'self'"],
         mediaSrc: ["'self'", 'blob:'],
+        upgradeInsecureRequests: config.NODE_ENV === 'production' && config.COOKIE_SECURE ? [] : null,
       },
     },
     crossOriginEmbedderPolicy: false,
   })
 );
 
+const corsAllowlist = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (corsAllowlist.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
@@ -68,9 +87,18 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// API Health Check (§10 Step 1)
+// API Health Check
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ ok: true, version: '1.0.0', service: 'Raksha Core API' });
+});
+
+// App Config for Client (Feature Flags)
+app.get('/api/config', (_req: Request, res: Response) => {
+  res.json({
+    demoMode: config.DEMO_MODE,
+    env: config.NODE_ENV,
+    assistantProvider: config.ASSISTANT_PROVIDER,
+  });
 });
 
 // Mount API Routers
@@ -84,6 +112,8 @@ app.use('/api', fakeCallsRouter);
 app.use('/api', responderRouter);
 app.use('/api', demoRouter);
 app.use('/api', pushRouter);
+app.use('/api', helpRouter);
+app.use('/api', assistantRouter);
 
 // Global Error Handler (Uniform Error Shape)
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -128,6 +158,12 @@ export async function startServer(): Promise<http.Server> {
 
   return new Promise((resolve) => {
     server.listen(config.PORT, '0.0.0.0', () => {
+      console.log(`\n\x1b[35m _   _   ___  _   _ _____ _   __ _____ _   _   ___  
+| \\ | | / _ \\| | | |_   _| | / //  ___| | | | / _ \\ 
+|  \\| |/ /_\\ \\ | | | | | | |/ / \\ \`--.| |_| |/ /_\\ \\
+| . \` ||  _  | | | | | | |    \\  \`--. \\  _  ||  _  |
+| |\\  || | | |\\ V / _| |_| |\\  \\/\\__/ / | | || | | |
+\\_| \\_/\\_| |_/ \\_/  \\___/\\_| \\_/\\____/\\_| |_/\\_| |_/\x1b[0m`);
       console.log(`\n========================================`);
       console.log(`🛡️  RAKSHA Server running on port ${config.PORT}`);
       console.log(`Environment: ${config.NODE_ENV}`);

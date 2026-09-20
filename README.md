@@ -20,7 +20,7 @@
 
 **A safety-aware navigation and emergency-response platform designed for vulnerable pedestrians, night travellers, and commuters.**
 
-*Prototype Disclaimer: Police and hospital alert dispatches in this prototype are simulated via the integrated Responder Console. SMS alerts are routed to a mock outbox by default. In an immediate life-threatening emergency, always dial 112.*
+*Notice: Police and hospital alert dispatches in this system are simulated via the integrated Responder Console. SMS alerts are routed to a mock outbox by default. In an immediate life-threatening emergency, always dial 112.*
 
 </div>
 
@@ -284,9 +284,9 @@ npm run check:links   # Validates all routes, static assets, and banned vendor 
 
 ---
 
-## 🔑 Default Demo Credentials & Pre-Seeded Data
+## 🔑 Default Credentials & Pre-Seeded Data
 
-For seamless judge and hackathon evaluation, the platform is pre-seeded with verified test accounts:
+For quick evaluation and platform exploration, the platform is pre-seeded with verified test accounts:
 
 | Role | Username / Access | Password / PIN | Notes |
 
@@ -370,7 +370,7 @@ Safety products fail at real-world boundaries. Raksha addresses 30 distinct atta
 
 | **10** | Competitor review-bombing or spamming hazard reports | Safety scores distorted. | **Exponential Half-Life Decay (24h)**: Requires multi-user geographic confirmation. |
 
-*Full 30-scenario matrix and technical defense descriptions available interactively at `/demo/what-if` and in [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md).*
+*Full 30-scenario operational matrix and technical documentation available at `/app/help`.*
 
 ---
 

@@ -186,7 +186,7 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
         : null,
     },
     safetyCheckHistory: [],
-    disclaimer: 'Prototype: police/hospital alerts are simulated.',
+    disclaimer: 'Notice: police/hospital alerts are simulated. In a real emergency call 112.',
   };
 
   // 5. Insert Incident
@@ -286,23 +286,26 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
     `).run(notifId, incidentId, guardian.id, nowIso, nowIso, JSON.stringify({ phone: guardian.phone }));
 
     // Send SMS via provider
+    const isDrill = Boolean(journey?.drill);
     const trackingLink = `http://localhost:5173/g/${guardian.token}`;
-    const smsBody = `[RAKSHA EMERGENCY] Alert from ${user.display_name}! Location: https://maps.google.com/?q=${params.lat},${params.lng}. Track live: ${trackingLink}`;
+    const smsPrefix = isDrill ? '[DRILL] ' : '';
+    const smsBody = `${smsPrefix}[RAKSHA EMERGENCY] Alert from ${user.display_name}! Location: https://maps.google.com/?q=${params.lat},${params.lng}. Track live: ${trackingLink}`;
 
     notificationPromises.push(
       smsProvider.send({
         toPhone: guardian.phone,
         body: smsBody,
-        kind: 'emergency_sos',
+        kind: isDrill ? 'drill_emergency_sos' : 'emergency_sos',
         incidentId,
         journeyId: params.journeyId || undefined,
+        isDrill,
       })
     );
 
     // Send Web Push if subscribed
     notificationPromises.push(
       sendWebPush('guardian', guardian.id, {
-        title: `🚨 EMERGENCY: ${user.display_name}`,
+        title: `${isDrill ? '[DRILL] ' : ''}🚨 EMERGENCY: ${user.display_name}`,
         body: `Emergency alert triggered (${params.trigger}). Open live coordination bridge.`,
         tag: `emergency-${incidentId}`,
         requireInteraction: true,

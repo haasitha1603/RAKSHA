@@ -85,6 +85,8 @@ journeysRouter.post(
       plannedStops,
       cab,
       timingProfile,
+      drill,
+      drillScenario,
     } = req.body;
 
     const journeyId = `jny_${nanoid(10)}`;
@@ -95,8 +97,8 @@ journeysRouter.post(
         id, user_id, status, mode, origin_json, dest_json, route_json,
         planned_eta_ts, timing_profile, simulated, level, risk_score,
         risk_explain_json, cab_json, checkpoint_rule_json, guardian_ids_json,
-        online, share_expires_at
-      ) VALUES (?, ?, 'planned', ?, ?, ?, ?, ?, ?, 0, 0, 10, '[]', ?, ?, ?, 1, ?)
+        online, share_expires_at, drill, drill_scenario
+      ) VALUES (?, ?, 'planned', ?, ?, ?, ?, ?, ?, 0, 0, 10, '[]', ?, ?, ?, 1, ?, ?, ?)
     `).run(
       journeyId,
       req.user!.id,
@@ -109,7 +111,9 @@ journeysRouter.post(
       cab ? JSON.stringify(cab) : null,
       checkpointIntervalMin ? JSON.stringify({ intervalMin: checkpointIntervalMin }) : null,
       JSON.stringify(guardianIds || []),
-      new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      drill ? 1 : 0,
+      drillScenario || null
     );
 
     // Insert planned stops if provided

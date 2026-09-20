@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { APPROVED_HONEST_COPY } from '@raksha/shared';
 
-export const PrototypeDisclaimer: React.FC<{ forceShow?: boolean }> = ({ forceShow = false }) => {
+export const SimulationNotice: React.FC<{ forceShow?: boolean }> = ({ forceShow = false }) => {
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed && !forceShow) return null;
@@ -14,7 +14,7 @@ export const PrototypeDisclaimer: React.FC<{ forceShow?: boolean }> = ({ forceSh
     >
       <div className="flex items-center gap-2">
         <AlertTriangle className="w-4 h-4 flex-shrink-0 text-caution" aria-hidden="true" />
-        <span className="font-medium">{APPROVED_HONEST_COPY.prototypeNotice}</span>
+        <span className="font-medium">{APPROVED_HONEST_COPY.simulationNotice}</span>
       </div>
       {!forceShow && (
         <button

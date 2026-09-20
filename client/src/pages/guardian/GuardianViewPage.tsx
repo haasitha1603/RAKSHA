@@ -17,7 +17,7 @@ import { apiFetch } from '../../lib/api.js';
 import { getSocket } from '../../lib/socket.js';
 import { Helmet } from 'react-helmet-async';
 import { SafetyMap } from '../../components/map/SafetyMap.js';
-import { PrototypeDisclaimer } from '../../components/common/PrototypeDisclaimer.js';
+import { SimulationNotice } from '../../components/common/SimulationNotice.js';
 
 interface GuardianViewData {
   user: {
@@ -160,7 +160,7 @@ export const GuardianViewPage: React.FC = () => {
 
       <div className="min-h-screen bg-bg text-text pb-12 flex flex-col justify-between">
         {/* Top Disclaimer */}
-        <PrototypeDisclaimer />
+        <SimulationNotice />
 
         {/* SOS BANNER IF EMERGENCY ACTIVE */}
         {isSos && (

@@ -51,8 +51,8 @@ export const Footer: React.FC = () => {
             <ul className="space-y-1.5 text-xs">
               <li><Link to="/app/plan" className="hover:text-text">Safe Route Planning</Link></li>
               <li><Link to="/app/fake-call" className="hover:text-text">Fake Call Generator</Link></li>
-              <li><Link to="/demo" className="hover:text-text">Demo Simulator</Link></li>
-              <li><Link to="/what-if" className="hover:text-text">What-If Matrix</Link></li>
+              <li><Link to="/app/drills" className="hover:text-text">Safety Drills</Link></li>
+              <li><Link to="/app/help" className="hover:text-text">Help &amp; Queries</Link></li>
               <li><Link to="/responder" className="hover:text-text">Responder Console</Link></li>
             </ul>
           </div>
@@ -71,20 +71,20 @@ export const Footer: React.FC = () => {
           <div>
             <h5 className="font-semibold text-text mb-2 text-xs uppercase tracking-wider">Contact</h5>
             <ul className="space-y-1.5 text-xs">
-              <li><Link to="/contact" className="hover:text-text">Operator Identity &amp; Feedback</Link></li>
-              <li><a href="mailto:contact@raksha.internal" className="hover:text-text">contact@raksha.internal</a></li>
-              <li><span className="text-[11px] block mt-1">Hackathon Prototype. Not legal or medical advice.</span></li>
+              <li><Link to="/legal/contact" className="hover:text-text">Operator Identity &amp; Feedback</Link></li>
+              <li><a href="mailto:support@raksha.internal" className="hover:text-text">support@raksha.internal</a></li>
+              <li><span className="text-[11px] block mt-1">Not legal or medical advice.</span></li>
             </ul>
           </div>
         </div>
 
-        {/* Prototype Honest Disclaimer Bottom Note */}
+        {/* Disclaimer Bottom Note */}
         <div className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <p className="text-text-muted">
-            &copy; {new Date().getFullYear()} Team Raksha. Built for Hackathon Prototype.
+            &copy; {new Date().getFullYear()} Team Raksha. All rights reserved.
           </p>
           <p className="text-caution font-medium text-center sm:text-right">
-            Prototype: police/hospital alerts are simulated. In a real emergency call 112.
+            Notice: police/hospital alerts are simulated. In a real emergency call 112.
           </p>
         </div>
       </div>

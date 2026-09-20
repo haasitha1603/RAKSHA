@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,8 +10,17 @@ import { Helmet } from 'react-helmet-async';
 
 export const LoginPage: React.FC = () => {
   const [serverError, setServerError] = useState<string | null>(null);
+  const [demoMode, setDemoMode] = useState<boolean>(false);
   const { setUser } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    apiFetch<{ demoMode: boolean }>('/api/config')
+      .then((cfg) => {
+        if (cfg?.demoMode) setDemoMode(true);
+      })
+      .catch(() => {});
+  }, []);
 
   const {
     register,
@@ -39,9 +48,15 @@ export const LoginPage: React.FC = () => {
       navigate('/app');
     } catch (err: any) {
       if (err instanceof ApiError) {
-        setServerError(err.message);
+        if (err.status === 401) {
+          setServerError('Incorrect username or password');
+        } else if (err.status === 429) {
+          setServerError('Too many attempts, try again in a minute');
+        } else {
+          setServerError(err.message || 'Incorrect username or password');
+        }
       } else {
-        setServerError('Invalid username or password.');
+        setServerError("Can't reach the server");
       }
     }
   };
@@ -64,6 +79,16 @@ export const LoginPage: React.FC = () => {
             <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center mx-auto shadow-sm">
               <Shield className="w-6 h-6" />
             </div>
+            <div className="text-center overflow-x-auto select-none py-1">
+              <pre className="font-mono text-[12px] leading-tight text-[#B727F5] inline-block text-left opacity-90">
+{` _   _   ___  _   _ _____ _   __ _____ _   _   ___  
+| \\ | | / _ \\| | | |_   _| | / //  ___| | | | / _ \\ 
+|  \\| |/ /_\\ \\ | | | | | | |/ / \\ \`--.| |_| |/ /_\\ \\
+| . \` ||  _  | | | | | | |    \\  \`--. \\  _  ||  _  |
+| |\\  || | | |\\ V / _| |_| |\\  \\/\\__/ / | | || | | |
+\\_| \\_/\\_| |_/ \\_/  \\___/\\_| \\_/\\____/\\_| |_/\\_| |_/`}
+              </pre>
+            </div>
             <h1 className="font-heading font-bold text-2xl text-text">Welcome Back</h1>
             <p className="text-xs text-text-muted">Sign in to monitor your journeys and emergency contacts.</p>
           </div>
@@ -75,20 +100,21 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Demo account quick filler */}
-          <div className="p-3 bg-primary-soft/60 border border-primary/20 rounded-xl flex items-center justify-between text-xs">
-            <div>
-              <span className="font-semibold text-primary block">Hackathon Demo User</span>
-              <span className="text-text-muted font-mono">demo / Demo@12345</span>
+          {demoMode && (
+            <div className="p-3 bg-primary-soft/60 border border-primary/20 rounded-xl flex items-center justify-between text-xs">
+              <div>
+                <span className="font-semibold text-primary block">Test Account</span>
+                <span className="text-text-muted font-mono">demo / Demo@12345</span>
+              </div>
+              <button
+                type="button"
+                onClick={fillDemoAccount}
+                className="px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:bg-primary-hover transition-colors"
+              >
+                Fill Credentials
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={fillDemoAccount}
-              className="px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:bg-primary-hover transition-colors"
-            >
-              Fill Demo
-            </button>
-          </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
@@ -126,8 +152,14 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl text-sm shadow-md transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl text-sm shadow-md transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
+              {isSubmitting && (
+                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+              )}
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </button>
           </form>

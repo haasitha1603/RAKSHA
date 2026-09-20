@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
-import { db } from '../db/index.js';
+import { db, getStmt } from '../db/index.js';
 import { config } from '../config.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
@@ -18,11 +18,12 @@ import {
 
 export const authRouter = Router();
 
-function createSessionCookie(res: Response, userId: string) {
+export function createSessionCookie(req: Request, res: Response, userId: string) {
+  const isSecure = Boolean(req.secure || req.headers['x-forwarded-proto'] === 'https');
   const token = jwt.sign({ userId }, config.JWT_SECRET, { expiresIn: '7d' });
   res.cookie('raksha_session', token, {
     httpOnly: true,
-    secure: config.COOKIE_SECURE,
+    secure: isSecure,
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
@@ -36,7 +37,7 @@ authRouter.post(
   async (req: Request, res: Response) => {
     const { username, password, displayName, ageConfirmed18, consents } = req.body;
 
-    const existing = db.prepare(`SELECT id FROM users WHERE username = ?`).get(username);
+    const existing = getStmt(`SELECT id FROM users WHERE username = ?`).get(username);
     if (existing) {
       res.status(409).json({
         error: { code: 'USERNAME_TAKEN', message: 'Username is already in use' },
@@ -58,7 +59,7 @@ authRouter.post(
       textSize: 'normal',
     };
 
-    db.prepare(`
+    getStmt(`
       INSERT INTO users (
         id, username, display_name, password_hash, age_confirmed_at, settings_json, created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -73,12 +74,12 @@ authRouter.post(
     );
 
     // Record required consent
-    db.prepare(`
+    getStmt(`
       INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
       VALUES (?, ?, 'terms_privacy', 1, '1.0', ?)
     `).run(`c_${nanoid(8)}`, userId, now);
 
-    createSessionCookie(res, userId);
+    createSessionCookie(req, res, userId);
 
     res.status(201).json({
       user: {
@@ -88,6 +89,7 @@ authRouter.post(
         hasSafetyPin: false,
         hasDuressPin: false,
         settings: defaultSettings,
+        onboardedAt: null,
       },
     });
   }
@@ -99,27 +101,30 @@ authRouter.post(
   validateBody(loginSchema),
   async (req: Request, res: Response) => {
     const { username, password } = req.body;
+    const normalizedUsername = (username || '').toLowerCase().trim();
 
-    const user = db.prepare(`SELECT * FROM users WHERE username = ?`).get(username.toLowerCase().trim()) as
-      | UserRow
+    const user = getStmt(`SELECT * FROM users WHERE username = ?`).get(normalizedUsername) as
+      | (UserRow & { onboarded_at?: string | null })
       | undefined;
 
     if (!user) {
+      console.warn(`[AUTH_FAILURE] ip=${req.ip} reason=user_not_found`);
       res.status(401).json({
-        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid username or password' },
+        error: { code: 'INVALID_CREDENTIALS', message: 'Incorrect username or password' },
       });
       return;
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
+      console.warn(`[AUTH_FAILURE] ip=${req.ip} reason=bad_password`);
       res.status(401).json({
-        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid username or password' },
+        error: { code: 'INVALID_CREDENTIALS', message: 'Incorrect username or password' },
       });
       return;
     }
 
-    createSessionCookie(res, user.id);
+    createSessionCookie(req, res, user.id);
 
     let parsedSettings = {};
     try {
@@ -134,6 +139,7 @@ authRouter.post(
         hasSafetyPin: Boolean(user.safety_pin_hash),
         hasDuressPin: Boolean(user.duress_pin_hash),
         settings: parsedSettings,
+        onboardedAt: user.onboarded_at || null,
       },
     });
   }
@@ -144,6 +150,12 @@ authRouter.post('/auth/logout', (_req: Request, res: Response) => {
   res.json({ success: true });
 });
 
+authRouter.post('/auth/onboarded', requireAuth, (req: AuthRequest, res: Response) => {
+  const now = new Date().toISOString();
+  getStmt(`UPDATE users SET onboarded_at = ? WHERE id = ?`).run(now, req.user!.id);
+  res.json({ success: true, onboardedAt: now });
+});
+
 authRouter.get('/me', requireAuth, (req: AuthRequest, res: Response) => {
   const user = req.user!;
   let parsedSettings = {};
@@ -151,7 +163,7 @@ authRouter.get('/me', requireAuth, (req: AuthRequest, res: Response) => {
     parsedSettings = JSON.parse(user.settings_json);
   } catch {}
 
-  const consents = db.prepare(`SELECT type, granted, policy_version, created_at FROM consents WHERE user_id = ?`).all(user.id);
+  const consents = getStmt(`SELECT type, granted, policy_version, created_at FROM consents WHERE user_id = ?`).all(user.id);
 
   res.json({
     user: {
@@ -162,6 +174,7 @@ authRouter.get('/me', requireAuth, (req: AuthRequest, res: Response) => {
       hasDuressPin: Boolean(user.duress_pin_hash),
       falseAlarmCount: user.false_alarm_count,
       settings: parsedSettings,
+      onboardedAt: (user as any).onboarded_at || null,
       createdAt: user.created_at,
     },
     consents,
@@ -177,7 +190,7 @@ authRouter.patch(
     const { displayName, settings } = req.body;
 
     if (displayName) {
-      db.prepare(`UPDATE users SET display_name = ? WHERE id = ?`).run(displayName.trim(), user.id);
+      getStmt(`UPDATE users SET display_name = ? WHERE id = ?`).run(displayName.trim(), user.id);
       user.display_name = displayName.trim();
     }
 
@@ -187,7 +200,7 @@ authRouter.patch(
         existingSettings = JSON.parse(user.settings_json);
       } catch {}
       const merged = { ...existingSettings, ...settings };
-      db.prepare(`UPDATE users SET settings_json = ? WHERE id = ?`).run(JSON.stringify(merged), user.id);
+      getStmt(`UPDATE users SET settings_json = ? WHERE id = ?`).run(JSON.stringify(merged), user.id);
       user.settings_json = JSON.stringify(merged);
     }
 
@@ -215,7 +228,7 @@ authRouter.post(
     const safetyHash = await bcrypt.hash(safetyPin, 10);
     const duressHash = await bcrypt.hash(duressPin, 10);
 
-    db.prepare(`
+    getStmt(`
       UPDATE users SET safety_pin_hash = ?, duress_pin_hash = ? WHERE id = ?
     `).run(safetyHash, duressHash, user.id);
 
@@ -227,7 +240,7 @@ authRouter.post(
 );
 
 authRouter.get('/consents', requireAuth, (req: AuthRequest, res: Response) => {
-  const consents = db.prepare(`SELECT * FROM consents WHERE user_id = ?`).all(req.user!.id);
+  const consents = getStmt(`SELECT * FROM consents WHERE user_id = ?`).all(req.user!.id);
   res.json({ consents });
 });
 
@@ -239,12 +252,12 @@ authRouter.post(
     const { type, granted } = req.body;
     const now = new Date().toISOString();
 
-    const existing = db.prepare(`SELECT id FROM consents WHERE user_id = ? AND type = ?`).get(req.user!.id, type) as { id: string } | undefined;
+    const existing = getStmt(`SELECT id FROM consents WHERE user_id = ? AND type = ?`).get(req.user!.id, type) as { id: string } | undefined;
 
     if (existing) {
-      db.prepare(`UPDATE consents SET granted = ?, created_at = ? WHERE id = ?`).run(granted ? 1 : 0, now, existing.id);
+      getStmt(`UPDATE consents SET granted = ?, created_at = ? WHERE id = ?`).run(granted ? 1 : 0, now, existing.id);
     } else {
-      db.prepare(`
+      getStmt(`
         INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
         VALUES (?, ?, ?, ?, '1.0', ?)
       `).run(`c_${nanoid(8)}`, req.user!.id, type, granted ? 1 : 0, now);
@@ -257,16 +270,16 @@ authRouter.post(
 authRouter.get('/me/export', requireAuth, (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
 
-  const userData = db.prepare(`
+  const userData = getStmt(`
     SELECT id, username, display_name, age_confirmed_at, settings_json, false_alarm_count, created_at
     FROM users WHERE id = ?
   `).get(userId);
 
-  const consents = db.prepare(`SELECT * FROM consents WHERE user_id = ?`).all(userId);
-  const guardians = db.prepare(`SELECT id, name, phone, relation, priority, status, created_at FROM guardians WHERE user_id = ?`).all(userId);
-  const journeys = db.prepare(`SELECT * FROM journeys WHERE user_id = ?`).all(userId);
-  const incidents = db.prepare(`SELECT * FROM incidents WHERE user_id = ?`).all(userId);
-  const fakeCalls = db.prepare(`SELECT * FROM fake_calls WHERE user_id = ?`).all(userId);
+  const consents = getStmt(`SELECT * FROM consents WHERE user_id = ?`).all(userId);
+  const guardians = getStmt(`SELECT id, name, phone, relation, priority, status, created_at FROM guardians WHERE user_id = ?`).all(userId);
+  const journeys = getStmt(`SELECT * FROM journeys WHERE user_id = ?`).all(userId);
+  const incidents = getStmt(`SELECT * FROM incidents WHERE user_id = ?`).all(userId);
+  const fakeCalls = getStmt(`SELECT * FROM fake_calls WHERE user_id = ?`).all(userId);
 
   const exportPayload = {
     exportedAt: new Date().toISOString(),
@@ -299,8 +312,8 @@ authRouter.delete('/me', requireAuth, async (req: AuthRequest, res: Response) =>
   }
 
   // Hard cascade delete: delete user cascades to consents, guardians, journeys, incidents, fake_calls
-  db.prepare(`DELETE FROM push_subscriptions WHERE owner_type = 'user' AND owner_id = ?`).run(user.id);
-  db.prepare(`DELETE FROM users WHERE id = ?`).run(user.id);
+  getStmt(`DELETE FROM push_subscriptions WHERE owner_type = 'user' AND owner_id = ?`).run(user.id);
+  getStmt(`DELETE FROM users WHERE id = ?`).run(user.id);
 
   res.clearCookie('raksha_session', { path: '/' });
   res.json({ success: true, message: 'Account and all associated personal data have been permanently deleted.' });

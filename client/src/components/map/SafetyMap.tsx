@@ -20,7 +20,7 @@ import {
 import { Layers, Shield, Cross, MapPin } from 'lucide-react';
 
 // Fix default Leaflet icon paths in bundler
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (Object.getPrototypeOf(new L.Icon.Default()) as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',

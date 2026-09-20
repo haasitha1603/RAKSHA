@@ -33,7 +33,7 @@ export const TermsPage: React.FC = () => {
             <div className="space-y-1">
               <strong className="block font-heading">Emergency Disclaimer Notice</strong>
               <p className="leading-relaxed">
-                Raksha is a safety assistive tool and hackathon prototype. In any immediate, life-threatening emergency, always dial <strong>112</strong> (National Emergency Helpline) or contact local law enforcement directly. Raksha does not replace municipal emergency services.
+                Raksha is a safety assistive platform. In any immediate, life-threatening emergency, always dial <strong>112</strong> (National Emergency Helpline) or contact local law enforcement directly. Raksha does not replace municipal emergency services.
               </p>
             </div>
           </div>

@@ -68,6 +68,8 @@ export interface JourneyRow {
   battery: number | null;
   online: number;
   share_expires_at: string | null;
+  drill?: number | null;
+  drill_scenario?: string | null;
 }
 
 export interface JourneyPointRow {

@@ -31,24 +31,21 @@ export const Navbar: React.FC = () => {
           </div>
           <div>
             <span className="font-heading font-extrabold text-xl tracking-tight text-text">RAKSHA</span>
-            <span className="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary-soft text-primary">
-              Prototype
-            </span>
           </div>
         </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-text-muted">
-          <Link to="/what-if" className="hover:text-text transition-colors">
-            What-If Matrix
+          <Link to="/app/help" className="hover:text-text transition-colors">
+            Help &amp; Queries
           </Link>
-          <Link to="/demo" className="hover:text-text transition-colors">
-            Demo Simulator
+          <Link to="/app/drills" className="hover:text-text transition-colors">
+            Safety Drills
           </Link>
           <Link to="/legal/privacy" className="hover:text-text transition-colors">
             Privacy
           </Link>
-          <Link to="/contact" className="hover:text-text transition-colors">
+          <Link to="/legal/contact" className="hover:text-text transition-colors">
             Contact
           </Link>
         </nav>
@@ -119,18 +116,18 @@ export const Navbar: React.FC = () => {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-surface px-4 pt-3 pb-6 space-y-3">
           <Link
-            to="/what-if"
+            to="/app/help"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-medium text-text"
           >
-            What-If Matrix
+            Help &amp; Queries
           </Link>
           <Link
-            to="/demo"
+            to="/app/drills"
             onClick={() => setMobileMenuOpen(false)}
             className="block py-2 text-base font-medium text-text"
           >
-            Demo Simulator
+            Safety Drills
           </Link>
           <Link
             to="/responder"

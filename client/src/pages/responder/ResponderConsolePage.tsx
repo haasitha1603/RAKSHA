@@ -18,7 +18,7 @@ import { apiFetch } from '../../lib/api.js';
 import { getSocket } from '../../lib/socket.js';
 import { Helmet } from 'react-helmet-async';
 import { SafetyMap } from '../../components/map/SafetyMap.js';
-import { PrototypeDisclaimer } from '../../components/common/PrototypeDisclaimer.js';
+import { SimulationNotice } from '../../components/common/SimulationNotice.js';
 
 interface Facility {
   id: string;
@@ -128,7 +128,7 @@ export const ResponderConsolePage: React.FC = () => {
       </Helmet>
 
       <div className="min-h-screen bg-bg text-text pb-12 flex flex-col justify-between">
-        <PrototypeDisclaimer />
+        <SimulationNotice />
 
         <div className="max-w-6xl mx-auto w-full px-4 py-6 space-y-6">
           {/* Top Bar Navigation */}

@@ -9,6 +9,7 @@ export interface SmsMessage {
   kind: string;
   incidentId?: string;
   journeyId?: string;
+  isDrill?: boolean;
 }
 
 export interface SmsProvider {
@@ -35,6 +36,7 @@ export class MockSmsProvider implements SmsProvider {
       kind: msg.kind,
       incidentId: msg.incidentId,
       journeyId: msg.journeyId,
+      isDrill: Boolean(msg.isDrill),
       createdAt: now,
     });
 
@@ -44,6 +46,11 @@ export class MockSmsProvider implements SmsProvider {
 
 export class TwilioSmsProvider implements SmsProvider {
   async send(msg: SmsMessage): Promise<{ success: boolean; provider: string }> {
+    // Drills are strictly simulated and never sent externally
+    if (msg.isDrill || msg.body.startsWith('[DRILL]')) {
+      return new MockSmsProvider().send(msg);
+    }
+
     if (!config.TWILIO_ACCOUNT_SID || !config.TWILIO_AUTH_TOKEN || !config.TWILIO_FROM) {
       console.warn('Twilio credentials missing. Falling back to MockSmsProvider.');
       return new MockSmsProvider().send(msg);

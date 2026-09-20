@@ -17,7 +17,7 @@ import { useJourneyStore } from '../../stores/journeyStore.js';
 import { useAuthStore } from '../../stores/authStore.js';
 import { audioSynthesizer } from '../../lib/audio.js';
 import { VerticalTimeline } from '../../components/timeline/VerticalTimeline.js';
-import { PrototypeDisclaimer } from '../../components/common/PrototypeDisclaimer.js';
+import { SimulationNotice } from '../../components/common/SimulationNotice.js';
 import { Helmet } from 'react-helmet-async';
 import { apiFetch } from '../../lib/api.js';
 
@@ -127,7 +127,7 @@ export const SosPage: React.FC = () => {
       </Helmet>
 
       <div className="max-w-md mx-auto px-4 py-6 pb-28 md:pb-12 space-y-6 text-center">
-        <PrototypeDisclaimer />
+        <SimulationNotice />
 
         {/* DURESS FAKE CANCELLED MESSAGE (§2.4 S7 & §4.3 primary flow 4) */}
         {duressFakeCancelled ? (

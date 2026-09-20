@@ -237,8 +237,8 @@ export async function seedDatabase(
     INSERT INTO users (
       id, username, display_name, password_hash,
       safety_pin_hash, duress_pin_hash, age_confirmed_at,
-      settings_json, false_alarm_count, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+      settings_json, false_alarm_count, onboarded_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
   `).run(
     demoUserId,
     'demo',
@@ -256,6 +256,7 @@ export async function seedDatabase(
       theme: 'auto',
       textSize: 'normal',
     }),
+    nowIso,
     nowIso
   );
 
@@ -403,7 +404,10 @@ export async function seedDatabase(
 // Direct execution support
 if (process.argv[1]?.endsWith('generate.ts') || process.argv[1]?.endsWith('generate.js')) {
   seedDatabase()
-    .then(() => process.exit(0))
+    .then(() => {
+      db.close();
+      process.exit(0);
+    })
     .catch((err) => {
       console.error('Seed failed:', err);
       process.exit(1);

@@ -8,11 +8,14 @@ export const authRateLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: {
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many authentication attempts. Please wait 1 minute.'
-    }
+  handler: (req: Request, res: Response) => {
+    console.warn(`[AUTH_FAILURE] ip=${req.ip} reason=rate_limited`);
+    res.status(429).json({
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many authentication attempts. Please wait 1 minute.'
+      }
+    });
   }
 });
 

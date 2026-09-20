@@ -102,7 +102,9 @@ export const createJourneySchema = z.object({
     driverName: z.string().optional(),
     company: z.string().optional()
   }).optional(),
-  timingProfile: z.enum(['production', 'demo']).default('production')
+  timingProfile: z.enum(['production', 'demo']).default('production'),
+  drill: z.boolean().optional().default(false),
+  drillScenario: z.string().optional()
 });
 
 export const createSosSchema = z.object({

@@ -73,6 +73,16 @@ export const SignupPage: React.FC = () => {
             <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center mx-auto shadow-sm">
               <Shield className="w-6 h-6" />
             </div>
+            <div className="text-center overflow-x-auto select-none py-1">
+              <pre className="font-mono text-[12px] leading-tight text-[#B727F5] inline-block text-left opacity-90">
+{` _   _   ___  _   _ _____ _   __ _____ _   _   ___  
+| \\ | | / _ \\| | | |_   _| | / //  ___| | | | / _ \\ 
+|  \\| |/ /_\\ \\ | | | | | | |/ / \\ \`--.| |_| |/ /_\\ \\
+| . \` ||  _  | | | | | | |    \\  \`--. \\  _  ||  _  |
+| |\\  || | | |\\ V / _| |_| |\\  \\/\\__/ / | | || | | |
+\\_| \\_/\\_| |_/ \\_/  \\___/\\_| \\_/\\____/\\_| |_/\\_| |_/`}
+              </pre>
+            </div>
             <h1 className="font-heading font-bold text-2xl text-text">Create your Raksha Account</h1>
             <p className="text-xs text-text-muted">
               Privacy by design: No email required. Pseudonyms are welcome.

@@ -90,7 +90,7 @@ const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" wi
 
   <!-- Badge -->
   <rect x="420" y="440" width="220" height="42" rx="21" fill="#4338CA" opacity="0.8" />
-  <text x="530" y="467" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="16" fill="#FFFFFF" text-anchor="middle">HACKATHON PROTOTYPE</text>
+  <text x="530" y="467" font-family="system-ui, -apple-system, sans-serif" font-weight="600" font-size="16" fill="#FFFFFF" text-anchor="middle">SAFETY NETWORK</text>
 </svg>`;
 
 async function generate() {

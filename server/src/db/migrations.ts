@@ -14,6 +14,7 @@ export function runMigrations(): void {
       age_confirmed_at TEXT NOT NULL,
       settings_json TEXT NOT NULL DEFAULT '{}',
       false_alarm_count INTEGER DEFAULT 0,
+      onboarded_at TEXT,
       created_at TEXT NOT NULL
     );
 
@@ -68,6 +69,8 @@ export function runMigrations(): void {
       battery INTEGER,
       online INTEGER NOT NULL DEFAULT 1,
       share_expires_at TEXT,
+      drill INTEGER NOT NULL DEFAULT 0,
+      drill_scenario TEXT,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
@@ -299,6 +302,16 @@ export function runMigrations(): void {
     CREATE INDEX IF NOT EXISTS idx_notifications_incident ON notifications(incident_id);
     CREATE INDEX IF NOT EXISTS idx_fake_calls_user ON fake_calls(user_id);
   `);
+
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN onboarded_at TEXT;`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE journeys ADD COLUMN drill INTEGER NOT NULL DEFAULT 0;`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE journeys ADD COLUMN drill_scenario TEXT;`);
+  } catch {}
 
   console.log('Database migrations completed successfully.');
 }

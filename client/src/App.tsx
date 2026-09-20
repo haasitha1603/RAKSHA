@@ -18,7 +18,6 @@ import { Navbar } from './components/layout/Navbar.js';
 import { BottomNav } from './components/layout/BottomNav.js';
 
 // Pages
-import { LandingPage } from './pages/LandingPage.js';
 import { SignupPage } from './pages/auth/SignupPage.js';
 import { LoginPage } from './pages/auth/LoginPage.js';
 import { OnboardingWizard } from './pages/auth/OnboardingWizard.js';
@@ -35,12 +34,12 @@ import { ReportsPage } from './pages/app/ReportsPage.js';
 import { HistoryPage } from './pages/app/HistoryPage.js';
 import { SettingsPage } from './pages/app/SettingsPage.js';
 import { DecoyPage } from './pages/app/DecoyPage.js';
+import { HelpPage } from './pages/app/HelpPage.js';
+import { DrillsPage } from './pages/app/DrillsPage.js';
 
 import { GuardianViewPage } from './pages/guardian/GuardianViewPage.js';
 import { ResponderLoginPage } from './pages/responder/ResponderLoginPage.js';
 import { ResponderConsolePage } from './pages/responder/ResponderConsolePage.js';
-import { DemoPage } from './pages/demo/DemoPage.js';
-import { WhatIfPage } from './pages/demo/WhatIfPage.js';
 
 import { PrivacyPage } from './pages/legal/PrivacyPage.js';
 import { TermsPage } from './pages/legal/TermsPage.js';
@@ -68,6 +67,19 @@ const ProtectedRoute: React.FC = () => {
   }
 
   return <Outlet />;
+};
+
+// Root Redirect based on authentication state
+const RootRedirect: React.FC = () => {
+  const { user, isLoading } = useAuthStore();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  return user ? <Navigate to="/app" replace /> : <Navigate to="/login" replace />;
 };
 
 // Main App Layout with Navbar & BottomNav
@@ -130,8 +142,10 @@ export const App: React.FC = () => {
         <OfflineBanner />
 
         <Routes>
-          {/* Public Marketing & Legal */}
-          <Route path="/" element={<LandingPage />} />
+          {/* Root Entry: Operational Redirect */}
+          <Route path="/" element={<RootRedirect />} />
+
+          {/* Legal & Info */}
           <Route path="/legal/privacy" element={<PrivacyPage />} />
           <Route path="/legal/terms" element={<TermsPage />} />
           <Route path="/legal/cookies" element={<CookiesPage />} />
@@ -144,16 +158,17 @@ export const App: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingWizard />} />
 
+          {/* Redirects */}
+          <Route path="/demo" element={<Navigate to="/app/drills" replace />} />
+          <Route path="/what-if" element={<Navigate to="/app/help" replace />} />
+          <Route path="/demo/what-if" element={<Navigate to="/app/help" replace />} />
+
           {/* Public Guardian Tracking Stream */}
           <Route path="/g/:token" element={<GuardianViewPage />} />
 
           {/* Simulated Responder Console */}
           <Route path="/responder" element={<ResponderLoginPage />} />
           <Route path="/responder/:facilityId" element={<ResponderConsolePage />} />
-
-          {/* Evaluation & Interactive Demo Harness */}
-          <Route path="/demo" element={<DemoPage />} />
-          <Route path="/demo/what-if" element={<WhatIfPage />} />
 
           {/* Protected User Routes (Standard App Layout) */}
           <Route element={<ProtectedRoute />}>
@@ -166,6 +181,8 @@ export const App: React.FC = () => {
               <Route path="/app/reports" element={<ReportsPage />} />
               <Route path="/app/history" element={<HistoryPage />} />
               <Route path="/app/settings" element={<SettingsPage />} />
+              <Route path="/app/help" element={<HelpPage />} />
+              <Route path="/app/drills" element={<DrillsPage />} />
             </Route>
 
             {/* Immersive Fullscreen Pages (No standard bottom nav) */}

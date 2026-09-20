@@ -54,6 +54,8 @@ const expectedRoutes = [
   '/app/history',
   '/app/settings',
   '/app/decoy',
+  '/app/help',
+  '/app/drills',
   '/responder',
   '/demo',
   '/demo/what-if',
@@ -74,10 +76,10 @@ for (const route of expectedRoutes) {
   }
 }
 
-// 3. Scan for Banned Words (Strict Compliance: NO banned vendor names)
+// 3. Scan for Banned Words
 console.log('\n🛡️  Scanning for Banned Words across codebase...');
-const bannedWord = ['rep', 'lit'].join('');
-const bannedPattern = new RegExp(`\\b${bannedWord}\\b`, 'i');
+const bannedWords = ['hackathon', 'prototype', 'judge', 'replit'];
+const bannedPattern = new RegExp(`\\b(${bannedWords.join('|')})\\b`, 'i');
 
 function scanDirForBanned(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -90,7 +92,9 @@ function scanDirForBanned(dir) {
       entry.name === 'data' ||
       entry.name === '.tmp' ||
       entry.name === 'licenses.json' ||
-      entry.name === 'check-links.mjs'
+      entry.name === 'package-lock.json' ||
+      entry.name === 'check-links.mjs' ||
+      entry.name === '.system_generated'
     ) {
       continue;
     }
@@ -111,7 +115,9 @@ function scanDirForBanned(dir) {
 }
 
 scanDirForBanned(rootDir);
-console.log('  ✓ Zero occurrences of banned vendor names.');
+if (!failed) {
+  console.log('  ✓ Zero occurrences of banned words (hackathon, prototype, judge, replit).');
+}
 
 // 4. Verify Built Client Artifacts
 console.log('\n⚡ Verifying Client Build Artifacts:');

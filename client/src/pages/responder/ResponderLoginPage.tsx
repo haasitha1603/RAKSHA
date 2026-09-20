@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, Cross, ArrowRight, Building2, Phone, MapPin } from 'lucide-react';
 import { apiFetch } from '../../lib/api.js';
 import { Helmet } from 'react-helmet-async';
-import { PrototypeDisclaimer } from '../../components/common/PrototypeDisclaimer.js';
+import { SimulationNotice } from '../../components/common/SimulationNotice.js';
 
 interface Facility {
   id: string;
@@ -44,7 +44,7 @@ export const ResponderLoginPage: React.FC = () => {
       </Helmet>
 
       <div className="min-h-screen bg-bg text-text pb-12 flex flex-col justify-between">
-        <PrototypeDisclaimer />
+        <SimulationNotice />
 
         <div className="max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
           <div className="text-center space-y-2">
