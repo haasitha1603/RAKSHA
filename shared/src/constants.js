@@ -1,0 +1,72 @@
+export const TIMING_PROFILES = {
+    production: {
+        positionIntervalMoving: 10000,
+        positionIntervalStationary: 30000,
+        positionIntervalEmergency: 5000,
+        connectivityLost: 90000,
+        stopDetect: 180000,
+        deviationSustain: 45000,
+        safetyCheckTimeout: 120000,
+        sosCancelWindow: 10000,
+        sosCancelWindowHighRisk: 5000,
+        guardianAckTimeout: 120000,
+        etaGracePercent: 0.15,
+        etaGraceMinMs: 300000,
+        checkpointIntervalDefault: 900000,
+        hysteresisMs: 120000,
+    },
+    demo: {
+        positionIntervalMoving: 3000,
+        positionIntervalStationary: 3000,
+        positionIntervalEmergency: 2000,
+        connectivityLost: 15000,
+        stopDetect: 20000,
+        deviationSustain: 8000,
+        safetyCheckTimeout: 20000,
+        sosCancelWindow: 10000,
+        sosCancelWindowHighRisk: 5000,
+        guardianAckTimeout: 25000,
+        etaGracePercent: 0.15,
+        etaGraceMinMs: 30000,
+        checkpointIntervalDefault: 45000,
+        hysteresisMs: 20000,
+    }
+};
+export const REPORT_HALF_LIVES_DAYS = {
+    lighting: 60,
+    unsafe_road: 45,
+    suspicious: 14,
+    harassment: 21,
+    accident: 2,
+    hazard: 3,
+    crowd: 1,
+    other: 14,
+};
+export const REPORT_HARD_EXPIRY_HOURS = {
+    hazard: 72,
+    accident: 48,
+    crowd: 24,
+    lighting: 720,
+    unsafe_road: 720,
+    suspicious: 720,
+    harassment: 720,
+    other: 720,
+};
+export const APPROVED_HONEST_COPY = {
+    prototypeNotice: 'Prototype: police/hospital alerts are simulated. In a real emergency call 112.',
+    honestFraming: 'Raksha notifies relevant parties simultaneously and shares structured information to reduce avoidable coordination delay. Actual response depends on local emergency services, connectivity and availability. Raksha cannot force a response.',
+    riskDisclaimer: 'Raksha estimates contextual risk and identifies situations that need a safety check or escalation. It cannot tell whether someone is being attacked.',
+    dataDisclaimer: 'Risk scores are explainable and based on the data available (demo data in this prototype).',
+    modelComparisonLabel: 'Illustrative model with adjustable assumptions — not a measured real-world result.',
+};
+export const BANNED_PHRASES = [
+    'guarantee',
+    'guaranteed',
+    '100% safe',
+    'instant police dispatch',
+    'AI detects attacks',
+    '24/7 monitored by Raksha',
+    'faster treatment',
+    'proven',
+    'trusted by thousands',
+];

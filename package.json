@@ -1,0 +1,30 @@
+{
+  "name": "raksha",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart Safe Route & Emergency Assistance",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"server,client\" -c \"blue,green\" \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build:shared": "npm run build -w shared",
+    "build:client": "npm run build -w client",
+    "build:server": "npm run build -w server",
+    "build": "npm run build:shared && npm run build:client && npm run build:server",
+    "start": "npm run start -w server",
+    "seed": "npm run seed -w server",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:links": "node scripts/check-links.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "licenses": "license-checker --json > client/src/licenses.json"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}

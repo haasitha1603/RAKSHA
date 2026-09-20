@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /app/
+Disallow: /g/
+Disallow: /responder/
+Allow: /
+
+Sitemap: /

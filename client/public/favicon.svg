@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4338CA" />
+      <stop offset="100%" stop-color="#1E1B4B" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded shield -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Outer pulse ring -->
+  <circle cx="256" cy="240" r="150" fill="none" stroke="#6366F1" stroke-width="6" stroke-dasharray="12 8" opacity="0.5" />
+
+  <!-- Shield contour -->
+  <path d="M256 96 L376 144 V260 C376 340 320 404 256 424 C192 404 136 340 136 260 V144 Z"
+        fill="none" stroke="url(#accentGrad)" stroke-width="20" stroke-linejoin="round" stroke-linecap="round" />
+
+  <!-- Inner locator pin / beacon -->
+  <circle cx="256" cy="226" r="38" fill="url(#accentGrad)" />
+  <circle cx="256" cy="226" r="18" fill="#FFFFFF" />
+
+  <!-- Pulse beacon waves -->
+  <path d="M256 264 L256 320" stroke="#34D399" stroke-width="12" stroke-linecap="round" />
+</svg>
