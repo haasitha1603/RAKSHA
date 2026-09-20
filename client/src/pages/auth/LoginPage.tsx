@@ -81,12 +81,11 @@ export const LoginPage: React.FC = () => {
             </div>
             <div className="text-center overflow-x-auto select-none py-1">
               <pre className="font-mono text-[12px] leading-tight text-[#B727F5] inline-block text-left opacity-90">
-{` _   _   ___  _   _ _____ _   __ _____ _   _   ___  
-| \\ | | / _ \\| | | |_   _| | / //  ___| | | | / _ \\ 
-|  \\| |/ /_\\ \\ | | | | | | |/ / \\ \`--.| |_| |/ /_\\ \\
-| . \` ||  _  | | | | | | |    \\  \`--. \\  _  ||  _  |
-| |\\  || | | |\\ V / _| |_| |\\  \\/\\__/ / | | || | | |
-\\_| \\_/\\_| |_/ \\_/  \\___/\\_| \\_/\\____/\\_| |_/\\_| |_/`}
+{` ____     _    _  ______  _   _    _    
+|  _ \\   / \\  | |/ / ___|| | | |  / \\   
+| |_) | / _ \\ | ' /\\___ \\| |_| | / _ \\  
+|  _ < / ___ \\| . \\ ___) |  _  |/ ___ \\ 
+|_| \\_/_/   \\_\\_|\\_\\____/|_| |_/_/   \\_\\`}
               </pre>
             </div>
             <h1 className="font-heading font-bold text-2xl text-text">Welcome Back</h1>
