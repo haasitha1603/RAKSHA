@@ -11,19 +11,19 @@ export async function seedDatabase(
   centerLng = config.DEMO_CENTER_LNG,
   seed = 42
 ) {
-  runMigrations();
+  await runMigrations();
 
   const prng = new SeededPRNG(seed);
   console.log(`Seeding database around [${centerLat}, ${centerLng}] (seed=${seed})...`);
 
   // Clear demo data
-  db.prepare(`DELETE FROM risk_zones WHERE is_demo = 1`).run();
-  db.prepare(`DELETE FROM lighting_zones`).run();
-  db.prepare(`DELETE FROM activity_zones`).run();
-  db.prepare(`DELETE FROM facilities WHERE is_demo = 1`).run();
-  db.prepare(`DELETE FROM reports WHERE is_demo = 1`).run();
-  db.prepare(`DELETE FROM report_votes`).run();
-  db.prepare(`DELETE FROM users WHERE username = 'demo'`).run();
+  await db.prepare(`DELETE FROM risk_zones WHERE is_demo = 1`).run();
+  await db.prepare(`DELETE FROM lighting_zones`).run();
+  await db.prepare(`DELETE FROM activity_zones`).run();
+  await db.prepare(`DELETE FROM facilities WHERE is_demo = 1`).run();
+  await db.prepare(`DELETE FROM reports WHERE is_demo = 1`).run();
+  await db.prepare(`DELETE FROM report_votes`).run();
+  await db.prepare(`DELETE FROM users WHERE username = 'demo'`).run();
 
   // Helper to offset lat/lng by dx/dy meters
   function offsetCoord(lat: number, lng: number, dxMeters: number, dyMeters: number) {
@@ -43,10 +43,6 @@ export async function seedDatabase(
   ];
 
   const categories = ['theft', 'harassment', 'assault', 'accident', 'suspicious'];
-  const insertRiskZone = db.prepare(`
-    INSERT INTO risk_zones (id, lat, lng, radius_m, severity, category, occurred_at, is_demo)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-  `);
 
   let zoneCount = 0;
   for (let c = 0; c < clusterCenters.length; c++) {
@@ -62,17 +58,15 @@ export async function seedDatabase(
       const daysAgo = prng.nextInt(1, 180);
       const occurredAt = new Date(Date.now() - daysAgo * 86400000).toISOString();
 
-      insertRiskZone.run(`rz_${nanoid(8)}`, pt.lat, pt.lng, radius, severity, cat, occurredAt);
+      await db.prepare(`
+        INSERT INTO risk_zones (id, lat, lng, radius_m, severity, category, occurred_at, is_demo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+      `).run(`rz_${nanoid(8)}`, pt.lat, pt.lng, radius, severity, cat, occurredAt);
       zoneCount++;
     }
   }
 
   // 2. Lighting Zones (30 circles, level 0.1-0.95, ~35% below 0.4)
-  const insertLighting = db.prepare(`
-    INSERT INTO lighting_zones (id, lat, lng, radius_m, level)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-
   for (let i = 0; i < 30; i++) {
     const dist = prng.nextFloat(200, 4500);
     const angle = prng.nextFloat(0, Math.PI * 2);
@@ -83,15 +77,13 @@ export async function seedDatabase(
 
     // ~35% poorly lit
     const level = i < 11 ? prng.nextFloat(0.1, 0.38) : prng.nextFloat(0.6, 0.95);
-    insertLighting.run(`lz_${nanoid(8)}`, pt.lat, pt.lng, radius, Number(level.toFixed(2)));
+    await db.prepare(`
+      INSERT INTO lighting_zones (id, lat, lng, radius_m, level)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(`lz_${nanoid(8)}`, pt.lat, pt.lng, radius, Number(level.toFixed(2)));
   }
 
   // 3. Activity Zones (24 circles, level 0.1-0.95: busy vs isolated)
-  const insertActivity = db.prepare(`
-    INSERT INTO activity_zones (id, lat, lng, radius_m, level)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-
   for (let i = 0; i < 24; i++) {
     const dist = prng.nextFloat(300, 5000);
     const angle = prng.nextFloat(0, Math.PI * 2);
@@ -100,20 +92,21 @@ export async function seedDatabase(
     const pt = offsetCoord(centerLat, centerLng, dx, dy);
     const radius = prng.nextInt(200, 500);
     const level = i < 8 ? prng.nextFloat(0.15, 0.35) : prng.nextFloat(0.65, 0.95);
-    insertActivity.run(`az_${nanoid(8)}`, pt.lat, pt.lng, radius, Number(level.toFixed(2)));
+    await db.prepare(`
+      INSERT INTO activity_zones (id, lat, lng, radius_m, level)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(`az_${nanoid(8)}`, pt.lat, pt.lng, radius, Number(level.toFixed(2)));
   }
 
   // 4. Facilities (>= 6 police, >= 6 hospitals, >= 10 safe places)
-  const insertFacility = db.prepare(`
-    INSERT INTO facilities (id, type, name, lat, lng, phone, is_24x7, is_demo, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'seed')
-  `);
-
   const compass = ['North', 'North-East', 'East', 'South-East', 'South', 'South-West', 'West', 'North-West'];
   for (let i = 0; i < 8; i++) {
     const angle = (i * Math.PI) / 4;
     const pPt = offsetCoord(centerLat, centerLng, Math.cos(angle) * 2200, Math.sin(angle) * 2200);
-    insertFacility.run(
+    await db.prepare(`
+      INSERT INTO facilities (id, type, name, lat, lng, phone, is_24x7, is_demo, source)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'seed')
+    `).run(
       `fac_pol_${i}`,
       'police',
       `Demo Police Station – ${compass[i]}`,
@@ -124,7 +117,10 @@ export async function seedDatabase(
     );
 
     const hPt = offsetCoord(centerLat, centerLng, Math.cos(angle + 0.3) * 2800, Math.sin(angle + 0.3) * 2800);
-    insertFacility.run(
+    await db.prepare(`
+      INSERT INTO facilities (id, type, name, lat, lng, phone, is_24x7, is_demo, source)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'seed')
+    `).run(
       `fac_hosp_${i}`,
       'hospital',
       `Demo Hospital – ${compass[i]}`,
@@ -155,7 +151,10 @@ export async function seedDatabase(
     const angle = prng.nextFloat(0, Math.PI * 2);
     const dist = prng.nextFloat(400, 3200);
     const pt = offsetCoord(centerLat, centerLng, Math.cos(angle) * dist, Math.sin(angle) * dist);
-    insertFacility.run(
+    await db.prepare(`
+      INSERT INTO facilities (id, type, name, lat, lng, phone, is_24x7, is_demo, source)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'seed')
+    `).run(
       `fac_safe_${i}`,
       safePlaceDefs[i].type,
       safePlaceDefs[i].name,
@@ -167,13 +166,6 @@ export async function seedDatabase(
   }
 
   // 5. Community Reports (18 reports: 6 unverified, 6 likely, 6 verified)
-  const insertReport = db.prepare(`
-    INSERT INTO reports (
-      id, reporter_hash, category, severity, text, lat, lng,
-      created_at, expires_at, confirmations, denials, flags, confidence, status, is_demo
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-  `);
-
   const demoReportsData = [
     // 6 Verified (high confidence >= 0.65)
     { cat: 'lighting', sev: 4, text: 'Streetlights out for ~300m stretch past the underpass. Very dark after 8 PM.', conf: 0.82, st: 'verified', c: 4, d: 0, f: 0 },
@@ -208,7 +200,12 @@ export async function seedDatabase(
     const createdAt = new Date(Date.now() - prng.nextInt(2, 48) * 3600000).toISOString();
     const expiresAt = new Date(Date.now() + 14 * 86400000).toISOString();
 
-    insertReport.run(
+    await db.prepare(`
+      INSERT INTO reports (
+        id, reporter_hash, category, severity, text, lat, lng,
+        created_at, expires_at, confirmations, denials, flags, confidence, status, is_demo
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+    `).run(
       `rep_${nanoid(8)}`,
       `hash_${nanoid(12)}`,
       item.cat,
@@ -233,7 +230,7 @@ export async function seedDatabase(
   const demoUserId = 'usr_demo_raksha_user';
   const nowIso = new Date().toISOString();
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO users (
       id, username, display_name, password_hash,
       safety_pin_hash, duress_pin_hash, age_confirmed_at,
@@ -261,26 +258,35 @@ export async function seedDatabase(
   );
 
   // Consents for Demo User
-  const insertConsent = db.prepare(`
+  await db.prepare(`
     INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
     VALUES (?, ?, ?, ?, '1.0', ?)
-  `);
-  insertConsent.run(`c_${nanoid(6)}`, demoUserId, 'terms_privacy', 1, nowIso);
-  insertConsent.run(`c_${nanoid(6)}`, demoUserId, 'location', 1, nowIso);
-  insertConsent.run(`c_${nanoid(6)}`, demoUserId, 'guardian_share', 1, nowIso);
-  insertConsent.run(`c_${nanoid(6)}`, demoUserId, 'push', 1, nowIso);
-  insertConsent.run(`c_${nanoid(6)}`, demoUserId, 'motion', 1, nowIso);
+  `).run(`c_${nanoid(6)}`, demoUserId, 'terms_privacy', 1, nowIso);
+  await db.prepare(`
+    INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
+    VALUES (?, ?, ?, ?, '1.0', ?)
+  `).run(`c_${nanoid(6)}`, demoUserId, 'location', 1, nowIso);
+  await db.prepare(`
+    INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
+    VALUES (?, ?, ?, ?, '1.0', ?)
+  `).run(`c_${nanoid(6)}`, demoUserId, 'guardian_share', 1, nowIso);
+  await db.prepare(`
+    INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
+    VALUES (?, ?, ?, ?, '1.0', ?)
+  `).run(`c_${nanoid(6)}`, demoUserId, 'push', 1, nowIso);
+  await db.prepare(`
+    INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
+    VALUES (?, ?, ?, ?, '1.0', ?)
+  `).run(`c_${nanoid(6)}`, demoUserId, 'motion', 1, nowIso);
 
   // Guardians
-  const insertGuardian = db.prepare(`
-    INSERT INTO guardians (id, user_id, name, phone, relation, priority, status, token, told_confirmed, last_viewed_at, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-  `);
-
   const momToken = 'guardian_demo_mom_tok';
   const friendToken = 'guardian_demo_friend_tok';
 
-  insertGuardian.run(
+  await db.prepare(`
+    INSERT INTO guardians (id, user_id, name, phone, relation, priority, status, token, told_confirmed, last_viewed_at, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+  `).run(
     'g_demo_mom',
     demoUserId,
     'Demo Guardian – Mom',
@@ -293,7 +299,10 @@ export async function seedDatabase(
     nowIso
   );
 
-  insertGuardian.run(
+  await db.prepare(`
+    INSERT INTO guardians (id, user_id, name, phone, relation, priority, status, token, told_confirmed, last_viewed_at, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+  `).run(
     'g_demo_friend',
     demoUserId,
     'Demo Guardian – Friend',
@@ -307,15 +316,6 @@ export async function seedDatabase(
   );
 
   // Past Completed Journeys
-  const insertJourney = db.prepare(`
-    INSERT INTO journeys (
-      id, user_id, status, mode, origin_json, dest_json, route_json,
-      planned_eta_ts, started_at, ended_at, timing_profile, simulated,
-      level, risk_score, risk_explain_json, cab_json, guardian_ids_json,
-      last_seen_ts, last_lat, last_lng, last_acc, battery, online, share_expires_at
-    ) VALUES (?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, 'demo', 1, 0, 12, '[]', ?, ?, ?, ?, ?, 8, 85, 1, ?)
-  `);
-
   for (let j = 1; j <= 3; j++) {
     const jId = `journey_past_${j}`;
     const startTime = new Date(Date.now() - (j * 24 + 2) * 3600000).toISOString();
@@ -331,7 +331,14 @@ export async function seedDatabase(
       [dest.lng, dest.lat],
     ];
 
-    insertJourney.run(
+    await db.prepare(`
+      INSERT INTO journeys (
+        id, user_id, status, mode, origin_json, dest_json, route_json,
+        planned_eta_ts, started_at, ended_at, timing_profile, simulated,
+        level, risk_score, risk_explain_json, cab_json, guardian_ids_json,
+        last_seen_ts, last_lat, last_lng, last_acc, battery, online, share_expires_at
+      ) VALUES (?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?, 'demo', 1, 0, 12, '[]', ?, ?, ?, ?, ?, 8, 85, 1, ?)
+    `).run(
       jId,
       demoUserId,
       'walk',
@@ -356,7 +363,7 @@ export async function seedDatabase(
     );
 
     // Event
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO journey_events (id, journey_id, ts, type, payload_json)
       VALUES (?, ?, ?, 'arrived_safe', '{}')
     `).run(`evt_${nanoid(8)}`, jId, endTime);
@@ -364,7 +371,7 @@ export async function seedDatabase(
 
   // 1 Scheduled Fake Call
   const scheduledTime = new Date(Date.now() + 15 * 60000).toISOString();
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO fake_calls (
       id, user_id, caller_name, caller_number, avatar_color,
       ringtone, ui_style, script_json, use_recording,
@@ -388,9 +395,9 @@ export async function seedDatabase(
   );
 
   // Save config coordinates
-  db.prepare(`INSERT OR REPLACE INTO app_config (key, value) VALUES ('demo_center_lat', ?)`).run(centerLat.toString());
-  db.prepare(`INSERT OR REPLACE INTO app_config (key, value) VALUES ('demo_center_lng', ?)`).run(centerLng.toString());
-  db.prepare(`INSERT OR REPLACE INTO app_config (key, value) VALUES ('timing_profile_default', 'demo')`).run();
+  await db.prepare(`INSERT INTO app_config (key, value) VALUES ('demo_center_lat', ?) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`).run(centerLat.toString());
+  await db.prepare(`INSERT INTO app_config (key, value) VALUES ('demo_center_lng', ?) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`).run(centerLng.toString());
+  await db.prepare(`INSERT INTO app_config (key, value) VALUES ('timing_profile_default', 'demo') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`).run();
 
   console.log('Seeding completed successfully:');
   console.log(`- ${zoneCount} Incident Zones across 6 clusters`);

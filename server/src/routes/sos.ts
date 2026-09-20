@@ -32,7 +32,7 @@ sosRouter.post(
 
     let journey: JourneyRow | undefined;
     if (journeyId) {
-      journey = db.prepare(`SELECT * FROM journeys WHERE id = ? AND user_id = ?`).get(journeyId, user.id) as JourneyRow;
+      journey = (await db.prepare(`SELECT * FROM journeys WHERE id = ? AND user_id = ?`).get(journeyId, user.id)) as JourneyRow;
     }
 
     const profileKey = (journey?.timing_profile as TimingProfileKey) || 'demo';
@@ -44,7 +44,7 @@ sosRouter.post(
 
     const sosId = `sos_${nanoid(10)}`;
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO sos_events (
         id, user_id, journey_id, trigger, discreet, status, created_at, cancel_until, lat, lng, acc
       ) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)
@@ -84,9 +84,9 @@ sosRouter.post(
     const { pin } = req.body;
     const user = req.user!;
 
-    const sos = db.prepare(`
+    const sos = (await db.prepare(`
       SELECT * FROM sos_events WHERE id = ? AND user_id = ?
-    `).get(id, user.id) as any;
+    `).get(id, user.id)) as any;
 
     if (!sos) {
       res.status(404).json({ error: { code: 'SOS_NOT_FOUND', message: 'SOS event not found' } });
@@ -101,7 +101,7 @@ sosRouter.post(
         // Visually the UI will show "SOS Cancelled", but behind the scenes:
         // status = 'duress_escalated'
         // An emergency incident is dispatched silently with duress = true!
-        db.prepare(`UPDATE sos_events SET status = 'duress_escalated' WHERE id = ?`).run(id);
+        await db.prepare(`UPDATE sos_events SET status = 'duress_escalated' WHERE id = ?`).run(id);
 
         await createEmergencyIncident({
           userId: user.id,
@@ -135,7 +135,7 @@ sosRouter.post(
     }
 
     // Genuine cancellation
-    db.prepare(`UPDATE sos_events SET status = 'cancelled' WHERE id = ?`).run(id);
+    await db.prepare(`UPDATE sos_events SET status = 'cancelled' WHERE id = ?`).run(id);
 
     emitToRoom(`user:${user.id}`, 'sos:cancelled', { sosId: id });
 
@@ -151,13 +151,13 @@ sosRouter.post('/sos/:id/confirm', requireAuth, async (req: AuthRequest, res: Re
   const { id } = req.params;
   const user = req.user!;
 
-  const sos = db.prepare(`SELECT * FROM sos_events WHERE id = ? AND user_id = ?`).get(id, user.id) as any;
+  const sos = (await db.prepare(`SELECT * FROM sos_events WHERE id = ? AND user_id = ?`).get(id, user.id)) as any;
   if (!sos) {
     res.status(404).json({ error: { code: 'SOS_NOT_FOUND', message: 'SOS event not found' } });
     return;
   }
 
-  db.prepare(`UPDATE sos_events SET status = 'escalated' WHERE id = ?`).run(id);
+  await db.prepare(`UPDATE sos_events SET status = 'escalated' WHERE id = ?`).run(id);
 
   const incidentId = await createEmergencyIncident({
     userId: user.id,
@@ -174,17 +174,17 @@ sosRouter.post('/sos/:id/confirm', requireAuth, async (req: AuthRequest, res: Re
   res.json({ success: true, incidentId });
 });
 
-sosRouter.get('/incidents/:id', requireAuth, (req: AuthRequest, res: Response) => {
-  const incident = db.prepare(`
+sosRouter.get('/incidents/:id', requireAuth, async (req: AuthRequest, res: Response) => {
+  const incident = (await db.prepare(`
     SELECT * FROM incidents WHERE id = ? AND user_id = ?
-  `).get(req.params.id, req.user!.id) as IncidentRow | undefined;
+  `).get(req.params.id, req.user!.id)) as IncidentRow | undefined;
 
   if (!incident) {
     res.status(404).json({ error: { code: 'INCIDENT_NOT_FOUND', message: 'Incident not found' } });
     return;
   }
 
-  const notifications = db.prepare(`
+  const notifications = await db.prepare(`
     SELECT * FROM notifications WHERE incident_id = ?
   `).all(incident.id);
 
@@ -212,18 +212,18 @@ sosRouter.post(
     const nowIso = new Date().toISOString();
     const finalStatus = falseAlarm ? 'false_alarm' : 'resolved';
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE incidents SET status = ?, resolved_at = ? WHERE id = ? AND user_id = ?
     `).run(finalStatus, nowIso, id, user.id);
 
     if (falseAlarm) {
-      db.prepare(`
+      await db.prepare(`
         UPDATE users SET false_alarm_count = false_alarm_count + 1 WHERE id = ?
       `).run(user.id);
     }
 
     // Update notifications
-    db.prepare(`
+    await db.prepare(`
       UPDATE notifications SET status = 'acknowledged', acknowledged_at = ? WHERE incident_id = ?
     `).run(nowIso, id);
 

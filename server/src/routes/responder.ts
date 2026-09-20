@@ -9,7 +9,7 @@ import { acknowledgeIncident } from '../engine/emergency.js';
 
 export const responderRouter = Router();
 
-responderRouter.post('/responder/login', validateBody(responderLoginSchema), (req: Request, res: Response) => {
+responderRouter.post('/responder/login', validateBody(responderLoginSchema), async (req: Request, res: Response) => {
   const { facilityId, key } = req.body;
 
   if (key !== config.DEMO_RESPONDER_KEY) {
@@ -17,7 +17,7 @@ responderRouter.post('/responder/login', validateBody(responderLoginSchema), (re
     return;
   }
 
-  const facility = db.prepare(`SELECT * FROM facilities WHERE id = ?`).get(facilityId) as FacilityRow | undefined;
+  const facility = (await db.prepare(`SELECT * FROM facilities WHERE id = ?`).get(facilityId)) as FacilityRow | undefined;
   if (!facility && facilityId !== 'all') {
     res.status(404).json({ error: { code: 'FACILITY_NOT_FOUND', message: 'Facility not found' } });
     return;
@@ -37,46 +37,48 @@ responderRouter.post('/responder/login', validateBody(responderLoginSchema), (re
   });
 });
 
-responderRouter.get('/responder/incidents', requireResponderAuth, (req: AuthRequest, res: Response) => {
+responderRouter.get('/responder/incidents', requireResponderAuth, async (req: AuthRequest, res: Response) => {
   const facilityId = req.responderFacilityId!;
 
   let incidents: IncidentRow[] = [];
   if (facilityId === 'all') {
-    incidents = db.prepare(`
+    incidents = (await db.prepare(`
       SELECT * FROM incidents WHERE status IN ('open', 'acknowledged') ORDER BY created_at DESC
-    `).all() as IncidentRow[];
+    `).all()) as IncidentRow[];
   } else {
     // Get incidents notifying this facility
-    incidents = db.prepare(`
+    incidents = (await db.prepare(`
       SELECT i.* FROM incidents i
       JOIN notifications n ON n.incident_id = i.id
       WHERE n.recipient_id = ? AND i.status IN ('open', 'acknowledged')
       ORDER BY i.created_at DESC
-    `).all(facilityId) as IncidentRow[];
+    `).all(facilityId)) as IncidentRow[];
   }
 
-  const enriched = incidents.map((inc) => {
-    let packet = {};
-    try {
-      packet = JSON.parse(inc.packet_json);
-    } catch {}
+  const enriched = await Promise.all(
+    incidents.map(async (inc) => {
+      let packet = {};
+      try {
+        packet = JSON.parse(inc.packet_json);
+      } catch {}
 
-    const notifications = db.prepare(`SELECT * FROM notifications WHERE incident_id = ?`).all(inc.id);
-    return {
-      ...inc,
-      packet,
-      notifications,
-    };
-  });
+      const notifications = await db.prepare(`SELECT * FROM notifications WHERE incident_id = ?`).all(inc.id);
+      return {
+        ...inc,
+        packet,
+        notifications,
+      };
+    })
+  );
 
   res.json({ incidents: enriched });
 });
 
-responderRouter.post('/responder/incidents/:id/ack', requireResponderAuth, (req: AuthRequest, res: Response) => {
+responderRouter.post('/responder/incidents/:id/ack', requireResponderAuth, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const facilityId = req.responderFacilityId!;
 
-  acknowledgeIncident(id, 'police', facilityId);
+  await acknowledgeIncident(id, 'police', facilityId);
   res.json({ success: true, message: 'Incident acknowledged by responder.' });
 });
 
@@ -84,23 +86,23 @@ responderRouter.post(
   '/responder/incidents/:id/dispatch',
   requireResponderAuth,
   validateBody(responderDispatchSchema),
-  (req: AuthRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { etaMinutes } = req.body;
     const facilityId = req.responderFacilityId!;
     const nowIso = new Date().toISOString();
 
-    const incident = db.prepare(`SELECT * FROM incidents WHERE id = ?`).get(id) as IncidentRow | undefined;
+    const incident = (await db.prepare(`SELECT * FROM incidents WHERE id = ?`).get(id)) as IncidentRow | undefined;
     if (!incident) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Incident not found' } });
       return;
     }
 
-    const facility = db.prepare(`SELECT name FROM facilities WHERE id = ?`).get(facilityId) as { name: string } | undefined;
+    const facility = (await db.prepare(`SELECT name FROM facilities WHERE id = ?`).get(facilityId)) as { name: string } | undefined;
     const facilityName = facility?.name || 'Emergency Unit';
 
     if (incident.journey_id) {
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO journey_events (id, journey_id, ts, type, payload_json)
         VALUES (?, ?, ?, 'responder_dispatched', ?)
       `).run(`evt_${id}_dispatch`, incident.journey_id, nowIso, JSON.stringify({ facilityName, etaMinutes }));
@@ -121,12 +123,12 @@ responderRouter.post(
   }
 );
 
-responderRouter.post('/responder/incidents/:id/resolve', requireResponderAuth, (req: AuthRequest, res: Response) => {
+responderRouter.post('/responder/incidents/:id/resolve', requireResponderAuth, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const nowIso = new Date().toISOString();
 
-  db.prepare(`UPDATE incidents SET status = 'resolved', resolved_at = ? WHERE id = ?`).run(nowIso, id);
-  db.prepare(`UPDATE notifications SET status = 'acknowledged', acknowledged_at = ? WHERE incident_id = ?`).run(nowIso, id);
+  await db.prepare(`UPDATE incidents SET status = 'resolved', resolved_at = ? WHERE id = ?`).run(nowIso, id);
+  await db.prepare(`UPDATE notifications SET status = 'acknowledged', acknowledged_at = ? WHERE incident_id = ?`).run(nowIso, id);
 
   emitToRoom(`incident:${id}`, 'incident:resolved', {
     incidentId: id,
@@ -138,16 +140,16 @@ responderRouter.post('/responder/incidents/:id/resolve', requireResponderAuth, (
   res.json({ success: true });
 });
 
-responderRouter.post('/responder/incidents/:id/false-alarm', requireResponderAuth, (req: AuthRequest, res: Response) => {
+responderRouter.post('/responder/incidents/:id/false-alarm', requireResponderAuth, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const nowIso = new Date().toISOString();
 
-  const incident = db.prepare(`SELECT user_id FROM incidents WHERE id = ?`).get(id) as { user_id: string } | undefined;
+  const incident = (await db.prepare(`SELECT user_id FROM incidents WHERE id = ?`).get(id)) as { user_id: string } | undefined;
   if (incident) {
-    db.prepare(`UPDATE users SET false_alarm_count = false_alarm_count + 1 WHERE id = ?`).run(incident.user_id);
+    await db.prepare(`UPDATE users SET false_alarm_count = false_alarm_count + 1 WHERE id = ?`).run(incident.user_id);
   }
 
-  db.prepare(`UPDATE incidents SET status = 'false_alarm', resolved_at = ? WHERE id = ?`).run(nowIso, id);
+  await db.prepare(`UPDATE incidents SET status = 'false_alarm', resolved_at = ? WHERE id = ?`).run(nowIso, id);
 
   emitToRoom(`incident:${id}`, 'incident:resolved', {
     incidentId: id,

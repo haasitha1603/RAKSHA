@@ -10,7 +10,7 @@ export interface AuthRequest extends Request {
   responderFacilityId?: string;
 }
 
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.cookies?.raksha_session;
   if (!token) {
     res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
@@ -19,7 +19,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
 
   try {
     const payload = jwt.verify(token, config.JWT_SECRET) as { userId: string };
-    const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(payload.userId) as UserRow | undefined;
+    const user = (await db.prepare(`SELECT * FROM users WHERE id = ?`).get(payload.userId)) as UserRow | undefined;
 
     if (!user) {
       res.clearCookie('raksha_session');
@@ -35,7 +35,7 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   }
 }
 
-export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+export async function optionalAuth(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
   const token = req.cookies?.raksha_session;
   if (!token) {
     return next();
@@ -43,7 +43,7 @@ export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction
 
   try {
     const payload = jwt.verify(token, config.JWT_SECRET) as { userId: string };
-    const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(payload.userId) as UserRow | undefined;
+    const user = (await db.prepare(`SELECT * FROM users WHERE id = ?`).get(payload.userId)) as UserRow | undefined;
     if (user) {
       req.user = user;
     }

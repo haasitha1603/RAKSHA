@@ -1,52 +1,106 @@
-import Database, { Database as DatabaseType } from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import pg from 'pg';
 import { config } from '../config.js';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '../../..');
+const { Pool } = pg;
 
-const resolvedDbPath = path.isAbsolute(config.DB_PATH)
-  ? config.DB_PATH
-  : path.resolve(projectRoot, config.DB_PATH);
+export const pool = new Pool({
+  connectionString: config.DATABASE_URL,
+});
 
-const dbDir = path.dirname(resolvedDbPath);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+pool.on('error', (err) => {
+  console.error('[POSTGRES_POOL_ERROR]', err);
+});
+
+console.log(`Database connected via PostgreSQL (${config.DATABASE_URL.replace(/:[^:@]+@/, ':****@')}).`);
+
+export function convertSql(sql: string): string {
+  let s = sql;
+  // Convert SQLite "INSERT OR IGNORE INTO" to Postgres "INSERT INTO ... ON CONFLICT DO NOTHING"
+  if (/INSERT\s+OR\s+IGNORE\s+INTO/i.test(s)) {
+    s = s.replace(/INSERT\s+OR\s+IGNORE\s+INTO/gi, 'INSERT INTO');
+    if (!/ON\s+CONFLICT/i.test(s)) {
+      s = s.trimEnd();
+      const hasSemi = s.endsWith(';');
+      if (hasSemi) s = s.slice(0, -1);
+      s += ' ON CONFLICT DO NOTHING' + (hasSemi ? ';' : '');
+    }
+  }
+
+  // Convert positional ? to $1, $2, $3... (ignoring characters in string literals)
+  let paramIdx = 1;
+  return s.replace(/'(?:''|[^'])*'|\?/g, (match) => {
+    if (match === '?') {
+      return `$${paramIdx++}`;
+    }
+    return match;
+  });
 }
 
-export const db: DatabaseType = new Database(resolvedDbPath);
-
-// Enable Write-Ahead Logging for speed & concurrent reads
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-db.pragma('synchronous = NORMAL');
-
-console.log(`Database connected at ${resolvedDbPath} with WAL mode.`);
-
-// Global statement cache to preserve V8 references under Node v24
-const statementCache = new Map<string, any>();
-
-export function getStmt(sql: string) {
-  let stmt = statementCache.get(sql);
-  if (!stmt) {
-    stmt = (db as any).__originalPrepare(sql);
-    statementCache.set(sql, stmt);
-  }
-  return stmt;
+export function sanitizeParams(params: any[]): any[] {
+  // If params was passed as an array inside the args, unwrap it
+  const list = params.length === 1 && Array.isArray(params[0]) ? params[0] : params;
+  return list.map((val) => {
+    if (val === undefined) return null;
+    if (typeof val === 'boolean') return val ? 1 : 0;
+    return val;
+  });
 }
 
-// Intercept all db.prepare calls to guarantee persistent caching across all modules
-const originalPrepare = db.prepare.bind(db);
-(db as any).__originalPrepare = originalPrepare;
+export interface PreparedStatement {
+  get<T = any>(...params: any[]): Promise<T | undefined>;
+  all<T = any>(...params: any[]): Promise<T[]>;
+  run(...params: any[]): Promise<{ changes: number }>;
+}
 
-(db as any).prepare = function (sql: string) {
-  let stmt = statementCache.get(sql);
-  if (!stmt) {
-    stmt = originalPrepare(sql);
-    statementCache.set(sql, stmt);
-  }
-  return stmt;
+export const db = {
+  prepare(sql: string): PreparedStatement {
+    const pgSql = convertSql(sql);
+    return {
+      async get<T = any>(...params: any[]): Promise<T | undefined> {
+        const cleanParams = sanitizeParams(params);
+        const result = await pool.query(pgSql, cleanParams);
+        return (result.rows[0] as T) || undefined;
+      },
+      async all<T = any>(...params: any[]): Promise<T[]> {
+        const cleanParams = sanitizeParams(params);
+        const result = await pool.query(pgSql, cleanParams);
+        return result.rows as T[];
+      },
+      async run(...params: any[]): Promise<{ changes: number }> {
+        const cleanParams = sanitizeParams(params);
+        const result = await pool.query(pgSql, cleanParams);
+        return { changes: result.rowCount ?? 0 };
+      },
+    };
+  },
+
+  async exec(sql: string): Promise<void> {
+    await pool.query(sql);
+  },
+
+  async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+    const cleanParams = sanitizeParams(params);
+    const result = await pool.query(convertSql(sql), cleanParams);
+    return result.rows as T[];
+  },
+
+  async queryOne<T = any>(sql: string, params: any[] = []): Promise<T | undefined> {
+    const cleanParams = sanitizeParams(params);
+    const result = await pool.query(convertSql(sql), cleanParams);
+    return (result.rows[0] as T) || undefined;
+  },
+
+  async execute(sql: string, params: any[] = []): Promise<{ changes: number }> {
+    const cleanParams = sanitizeParams(params);
+    const result = await pool.query(convertSql(sql), cleanParams);
+    return { changes: result.rowCount ?? 0 };
+  },
+
+  async close(): Promise<void> {
+    await pool.end();
+  },
 };
+
+export function getStmt(sql: string): PreparedStatement {
+  return db.prepare(sql);
+}

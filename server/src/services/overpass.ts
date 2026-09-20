@@ -16,12 +16,12 @@ export async function fetchNearbyFacilities(
     return filterFacilities(cached.facilities, lat, lng, radiusMeters, types);
   }
 
-  // First query seeded / cached facilities from SQLite
+  // First query seeded / cached facilities from database
   const bbox = getBoundingBox(lat, lng, radiusMeters);
-  const localFacilities = db.prepare(`
+  const localFacilities = (await db.prepare(`
     SELECT * FROM facilities
     WHERE lat BETWEEN ? AND ? AND lng BETWEEN ? AND ?
-  `).all(bbox.minLat, bbox.maxLat, bbox.minLng, bbox.maxLng) as FacilityRow[];
+  `).all(bbox.minLat, bbox.maxLat, bbox.minLng, bbox.maxLng)) as FacilityRow[];
 
   // If we already have seeded facilities in range, use them
   if (localFacilities.length >= 10) {
@@ -95,8 +95,8 @@ export async function fetchNearbyFacilities(
     console.warn('Overpass fetch failed, falling back to local seeded facilities:', (err as Error).message);
   }
 
-  // Fallback: Return all seeded facilities in SQLite
-  const allFacilities = db.prepare(`SELECT * FROM facilities`).all() as FacilityRow[];
+  // Fallback: Return all seeded facilities in database
+  const allFacilities = (await db.prepare(`SELECT * FROM facilities`).all()) as FacilityRow[];
   return filterFacilities(allFacilities, lat, lng, radiusMeters, types);
 }
 

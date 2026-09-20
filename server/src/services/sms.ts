@@ -21,7 +21,7 @@ export class MockSmsProvider implements SmsProvider {
     const outboxId = `out_${nanoid(8)}`;
     const now = new Date().toISOString();
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO outbox (id, to_phone, body, kind, incident_id, journey_id, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(outboxId, msg.toPhone, msg.body, msg.kind, msg.incidentId || null, msg.journeyId || null, now);

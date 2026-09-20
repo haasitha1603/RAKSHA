@@ -134,18 +134,18 @@ if (fs.existsSync(clientDist)) {
 
 // Scheduled Jobs
 // Hourly: Recompute report confidence & expiry
-cron.schedule('0 * * * *', () => {
+cron.schedule('0 * * * *', async () => {
   try {
-    recomputeAllReports();
+    await recomputeAllReports();
   } catch (e) {
     console.error('Error in hourly report recompute:', e);
   }
 });
 
 // Daily: Retention purge at 03:00 AM
-cron.schedule('0 3 * * *', () => {
+cron.schedule('0 3 * * *', async () => {
   try {
-    runRetentionPurge();
+    await runRetentionPurge();
   } catch (e) {
     console.error('Error in daily retention purge:', e);
   }
@@ -153,7 +153,7 @@ cron.schedule('0 3 * * *', () => {
 
 // Server Initialization
 export async function startServer(): Promise<http.Server> {
-  runMigrations();
+  await runMigrations();
   startWatchdog();
 
   return new Promise((resolve) => {

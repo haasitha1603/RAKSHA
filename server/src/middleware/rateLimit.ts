@@ -66,15 +66,15 @@ export const sosRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request) => (req as AuthRequest).user?.id || req.ip || 'unknown',
-  handler: (req: Request, res: Response) => {
+  handler: async (req: Request, res: Response) => {
     // Ground Rule / Loophole 16: Never block SOS with a hard error — return existing active SOS
     const authReq = req as AuthRequest;
     if (authReq.user) {
-      const activeSos = db.prepare(`
+      const activeSos = (await db.prepare(`
         SELECT id, cancel_until, status FROM sos_events
         WHERE user_id = ? AND status IN ('pending', 'escalated', 'duress_escalated')
         ORDER BY created_at DESC LIMIT 1
-      `).get(authReq.user.id) as { id: string; cancel_until: string; status: string } | undefined;
+      `).get(authReq.user.id)) as { id: string; cancel_until: string; status: string } | undefined;
 
       if (activeSos) {
         res.json({

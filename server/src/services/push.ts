@@ -26,10 +26,10 @@ export async function sendWebPush(
   ownerId: string,
   payload: PushPayload
 ): Promise<void> {
-  const subscriptions = db.prepare(`
+  const subscriptions = (await db.prepare(`
     SELECT * FROM push_subscriptions
     WHERE owner_type = ? AND owner_id = ?
-  `).all(ownerType, ownerId) as PushSubscriptionRow[];
+  `).all(ownerType, ownerId)) as PushSubscriptionRow[];
 
   if (subscriptions.length === 0) return;
 
@@ -48,7 +48,7 @@ export async function sendWebPush(
     } catch (err: any) {
       if (err.statusCode === 404 || err.statusCode === 410) {
         // Expired subscription, remove from DB
-        db.prepare(`DELETE FROM push_subscriptions WHERE endpoint = ?`).run(sub.endpoint);
+        await db.prepare(`DELETE FROM push_subscriptions WHERE endpoint = ?`).run(sub.endpoint);
       }
     }
   }

@@ -1,9 +1,9 @@
 import { db } from './index.js';
 
-export function runMigrations(): void {
-  console.log('Running database migrations...');
+export async function runMigrations(): Promise<void> {
+  console.log('Running PostgreSQL database migrations...');
 
-  db.exec(`
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
@@ -20,17 +20,16 @@ export function runMigrations(): void {
 
     CREATE TABLE IF NOT EXISTS consents (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       type TEXT NOT NULL,
       granted INTEGER NOT NULL DEFAULT 0,
       policy_version TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS guardians (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name TEXT NOT NULL,
       phone TEXT NOT NULL,
       relation TEXT NOT NULL,
@@ -39,13 +38,12 @@ export function runMigrations(): void {
       token TEXT UNIQUE NOT NULL,
       told_confirmed INTEGER NOT NULL DEFAULT 0,
       last_viewed_at TEXT,
-      created_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS journeys (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       status TEXT NOT NULL DEFAULT 'planned',
       mode TEXT NOT NULL DEFAULT 'walk',
       origin_json TEXT NOT NULL,
@@ -63,82 +61,75 @@ export function runMigrations(): void {
       checkpoint_rule_json TEXT,
       guardian_ids_json TEXT NOT NULL DEFAULT '[]',
       last_seen_ts TEXT,
-      last_lat REAL,
-      last_lng REAL,
-      last_acc REAL,
+      last_lat DOUBLE PRECISION,
+      last_lng DOUBLE PRECISION,
+      last_acc DOUBLE PRECISION,
       battery INTEGER,
       online INTEGER NOT NULL DEFAULT 1,
       share_expires_at TEXT,
       drill INTEGER NOT NULL DEFAULT 0,
-      drill_scenario TEXT,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      drill_scenario TEXT
     );
 
     CREATE TABLE IF NOT EXISTS journey_points (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      journey_id TEXT NOT NULL,
+      id SERIAL PRIMARY KEY,
+      journey_id TEXT NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
       ts TEXT NOT NULL,
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
-      acc REAL NOT NULL,
-      speed REAL,
-      heading REAL,
-      battery INTEGER,
-      FOREIGN KEY (journey_id) REFERENCES journeys(id) ON DELETE CASCADE
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
+      acc DOUBLE PRECISION NOT NULL,
+      speed DOUBLE PRECISION,
+      heading DOUBLE PRECISION,
+      battery INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS journey_events (
       id TEXT PRIMARY KEY,
-      journey_id TEXT NOT NULL,
+      journey_id TEXT NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
       ts TEXT NOT NULL,
       type TEXT NOT NULL,
-      payload_json TEXT NOT NULL DEFAULT '{}',
-      FOREIGN KEY (journey_id) REFERENCES journeys(id) ON DELETE CASCADE
+      payload_json TEXT NOT NULL DEFAULT '{}'
     );
 
     CREATE TABLE IF NOT EXISTS planned_stops (
       id TEXT PRIMARY KEY,
-      journey_id TEXT NOT NULL,
+      journey_id TEXT NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
       label TEXT NOT NULL,
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
       radius_m INTEGER NOT NULL DEFAULT 100,
-      until_ts TEXT NOT NULL,
-      FOREIGN KEY (journey_id) REFERENCES journeys(id) ON DELETE CASCADE
+      until_ts TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS safety_checks (
       id TEXT PRIMARY KEY,
-      journey_id TEXT NOT NULL,
+      journey_id TEXT NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
       kind TEXT NOT NULL,
       sent_at TEXT NOT NULL,
       due_at TEXT NOT NULL,
       responded_at TEXT,
-      response TEXT,
-      FOREIGN KEY (journey_id) REFERENCES journeys(id) ON DELETE CASCADE
+      response TEXT
     );
 
     CREATE TABLE IF NOT EXISTS sos_events (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      journey_id TEXT,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      journey_id TEXT REFERENCES journeys(id) ON DELETE SET NULL,
       trigger TEXT NOT NULL,
       discreet INTEGER NOT NULL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'pending',
       created_at TEXT NOT NULL,
       cancel_until TEXT NOT NULL,
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
-      acc REAL NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (journey_id) REFERENCES journeys(id) ON DELETE SET NULL
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
+      acc DOUBLE PRECISION NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS incidents (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      journey_id TEXT,
-      sos_id TEXT,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      journey_id TEXT REFERENCES journeys(id) ON DELETE SET NULL,
+      sos_id TEXT REFERENCES sos_events(id) ON DELETE SET NULL,
       level INTEGER NOT NULL DEFAULT 3,
       status TEXT NOT NULL DEFAULT 'open',
       trigger TEXT NOT NULL,
@@ -146,15 +137,12 @@ export function runMigrations(): void {
       created_at TEXT NOT NULL,
       resolved_at TEXT,
       packet_json TEXT NOT NULL DEFAULT '{}',
-      guardian_ack_deadline TEXT,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (journey_id) REFERENCES journeys(id) ON DELETE SET NULL,
-      FOREIGN KEY (sos_id) REFERENCES sos_events(id) ON DELETE SET NULL
+      guardian_ack_deadline TEXT
     );
 
     CREATE TABLE IF NOT EXISTS notifications (
       id TEXT PRIMARY KEY,
-      incident_id TEXT NOT NULL,
+      incident_id TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
       recipient_type TEXT NOT NULL,
       recipient_id TEXT NOT NULL,
       channel TEXT NOT NULL,
@@ -163,16 +151,15 @@ export function runMigrations(): void {
       sent_at TEXT,
       delivered_at TEXT,
       acknowledged_at TEXT,
-      meta_json TEXT NOT NULL DEFAULT '{}',
-      FOREIGN KEY (incident_id) REFERENCES incidents(id) ON DELETE CASCADE
+      meta_json TEXT NOT NULL DEFAULT '{}'
     );
 
     CREATE TABLE IF NOT EXISTS facilities (
       id TEXT PRIMARY KEY,
       type TEXT NOT NULL,
       name TEXT NOT NULL,
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
       phone TEXT NOT NULL,
       is_24x7 INTEGER NOT NULL DEFAULT 1,
       is_demo INTEGER NOT NULL DEFAULT 0,
@@ -181,8 +168,8 @@ export function runMigrations(): void {
 
     CREATE TABLE IF NOT EXISTS risk_zones (
       id TEXT PRIMARY KEY,
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
       radius_m INTEGER NOT NULL DEFAULT 200,
       severity INTEGER NOT NULL DEFAULT 3,
       category TEXT NOT NULL,
@@ -192,18 +179,18 @@ export function runMigrations(): void {
 
     CREATE TABLE IF NOT EXISTS lighting_zones (
       id TEXT PRIMARY KEY,
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
       radius_m INTEGER NOT NULL DEFAULT 200,
-      level REAL NOT NULL DEFAULT 0.5
+      level DOUBLE PRECISION NOT NULL DEFAULT 0.5
     );
 
     CREATE TABLE IF NOT EXISTS activity_zones (
       id TEXT PRIMARY KEY,
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
       radius_m INTEGER NOT NULL DEFAULT 200,
-      level REAL NOT NULL DEFAULT 0.5
+      level DOUBLE PRECISION NOT NULL DEFAULT 0.5
     );
 
     CREATE TABLE IF NOT EXISTS reports (
@@ -212,31 +199,30 @@ export function runMigrations(): void {
       category TEXT NOT NULL,
       severity INTEGER NOT NULL DEFAULT 3,
       text TEXT NOT NULL DEFAULT '',
-      lat REAL NOT NULL,
-      lng REAL NOT NULL,
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
       created_at TEXT NOT NULL,
       expires_at TEXT NOT NULL,
       confirmations INTEGER NOT NULL DEFAULT 0,
       denials INTEGER NOT NULL DEFAULT 0,
       flags INTEGER NOT NULL DEFAULT 0,
-      confidence REAL NOT NULL DEFAULT 0.25,
+      confidence DOUBLE PRECISION NOT NULL DEFAULT 0.25,
       status TEXT NOT NULL DEFAULT 'unverified',
       is_demo INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS report_votes (
       id TEXT PRIMARY KEY,
-      report_id TEXT NOT NULL,
+      report_id TEXT NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
       voter_hash TEXT NOT NULL,
       vote TEXT NOT NULL,
       created_at TEXT NOT NULL,
-      UNIQUE(report_id, voter_hash),
-      FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE
+      CONSTRAINT unq_report_voter UNIQUE (report_id, voter_hash)
     );
 
     CREATE TABLE IF NOT EXISTS fake_calls (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       caller_name TEXT NOT NULL,
       caller_number TEXT NOT NULL,
       avatar_color TEXT NOT NULL DEFAULT '#4338CA',
@@ -248,8 +234,7 @@ export function runMigrations(): void {
       ring_seconds INTEGER NOT NULL DEFAULT 30,
       notify_guardian INTEGER NOT NULL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'scheduled',
-      created_at TEXT NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      created_at TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -273,11 +258,9 @@ export function runMigrations(): void {
 
     CREATE TABLE IF NOT EXISTS guardian_access_log (
       id TEXT PRIMARY KEY,
-      guardian_id TEXT NOT NULL,
-      journey_id TEXT NOT NULL,
-      ts TEXT NOT NULL,
-      FOREIGN KEY (guardian_id) REFERENCES guardians(id) ON DELETE CASCADE,
-      FOREIGN KEY (journey_id) REFERENCES journeys(id) ON DELETE CASCADE
+      guardian_id TEXT NOT NULL REFERENCES guardians(id) ON DELETE CASCADE,
+      journey_id TEXT NOT NULL REFERENCES journeys(id) ON DELETE CASCADE,
+      ts TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS app_config (
@@ -301,17 +284,22 @@ export function runMigrations(): void {
     CREATE INDEX IF NOT EXISTS idx_incidents_user_id ON incidents(user_id);
     CREATE INDEX IF NOT EXISTS idx_notifications_incident ON notifications(incident_id);
     CREATE INDEX IF NOT EXISTS idx_fake_calls_user ON fake_calls(user_id);
+
+    -- Dynamic safe column additions
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarded_at TEXT;
+    ALTER TABLE journeys ADD COLUMN IF NOT EXISTS drill INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE journeys ADD COLUMN IF NOT EXISTS drill_scenario TEXT;
   `);
 
-  try {
-    db.exec(`ALTER TABLE users ADD COLUMN onboarded_at TEXT;`);
-  } catch {}
-  try {
-    db.exec(`ALTER TABLE journeys ADD COLUMN drill INTEGER NOT NULL DEFAULT 0;`);
-  } catch {}
-  try {
-    db.exec(`ALTER TABLE journeys ADD COLUMN drill_scenario TEXT;`);
-  } catch {}
-
-  console.log('Database migrations completed successfully.');
+  console.log('PostgreSQL database migrations completed successfully.');
 }
+
+if (process.argv[1]?.includes('migrations')) {
+  runMigrations()
+    .then(() => db.close())
+    .catch((err) => {
+      console.error('Migration failed:', err);
+      process.exit(1);
+    });
+}
+

@@ -20,11 +20,11 @@ import { smsProvider } from '../services/sms.js';
 
 export const journeysRouter = Router();
 
-journeysRouter.get('/journeys/active', requireAuth, (req: AuthRequest, res: Response) => {
-  const journey = db.prepare(`
+journeysRouter.get('/journeys/active', requireAuth, async (req: AuthRequest, res: Response) => {
+  const journey = (await db.prepare(`
     SELECT * FROM journeys WHERE user_id = ? AND status IN ('active', 'emergency')
     ORDER BY started_at DESC LIMIT 1
-  `).get(req.user!.id) as JourneyRow | undefined;
+  `).get(req.user!.id)) as JourneyRow | undefined;
 
   if (!journey) {
     res.json({ journey: null });
@@ -32,37 +32,38 @@ journeysRouter.get('/journeys/active', requireAuth, (req: AuthRequest, res: Resp
   }
 
   // Get active safety check if any
-  const pendingCheck = db.prepare(`
+  const nowIso = new Date().toISOString();
+  const pendingCheck = await db.prepare(`
     SELECT * FROM safety_checks
-    WHERE journey_id = ? AND responded_at IS NULL AND datetime(due_at) > datetime('now')
+    WHERE journey_id = ? AND responded_at IS NULL AND due_at > ?
     ORDER BY sent_at DESC LIMIT 1
-  `).get(journey.id);
+  `).get(journey.id, nowIso);
 
   res.json({ journey, pendingCheck: pendingCheck || null });
 });
 
-journeysRouter.get('/journeys', requireAuth, (req: AuthRequest, res: Response) => {
-  const journeys = db.prepare(`
-    SELECT * FROM journeys WHERE user_id = ? ORDER BY COALESCE(started_at, created_at) DESC
+journeysRouter.get('/journeys', requireAuth, async (req: AuthRequest, res: Response) => {
+  const journeys = await db.prepare(`
+    SELECT * FROM journeys WHERE user_id = ? ORDER BY started_at DESC
   `).all(req.user!.id);
   res.json({ journeys });
 });
 
-journeysRouter.get('/journeys/:id', requireAuth, (req: AuthRequest, res: Response) => {
-  const journey = db.prepare(`
+journeysRouter.get('/journeys/:id', requireAuth, async (req: AuthRequest, res: Response) => {
+  const journey = (await db.prepare(`
     SELECT * FROM journeys WHERE id = ? AND user_id = ?
-  `).get(req.params.id, req.user!.id) as JourneyRow | undefined;
+  `).get(req.params.id, req.user!.id)) as JourneyRow | undefined;
 
   if (!journey) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Journey not found' } });
     return;
   }
 
-  const points = db.prepare(`
+  const points = await db.prepare(`
     SELECT * FROM journey_points WHERE journey_id = ? ORDER BY id ASC
   `).all(journey.id);
 
-  const events = db.prepare(`
+  const events = await db.prepare(`
     SELECT * FROM journey_events WHERE journey_id = ? ORDER BY ts ASC
   `).all(journey.id);
 
@@ -73,7 +74,7 @@ journeysRouter.post(
   '/journeys',
   requireAuth,
   validateBody(createJourneySchema),
-  (req: AuthRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const {
       mode,
       origin,
@@ -90,9 +91,8 @@ journeysRouter.post(
     } = req.body;
 
     const journeyId = `jny_${nanoid(10)}`;
-    const nowIso = new Date().toISOString();
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO journeys (
         id, user_id, status, mode, origin_json, dest_json, route_json,
         planned_eta_ts, timing_profile, simulated, level, risk_score,
@@ -123,7 +123,7 @@ journeysRouter.post(
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
       for (const ps of plannedStops) {
-        insertStop.run(`stop_${nanoid(6)}`, journeyId, ps.label, ps.lat, ps.lng, ps.radiusM || 100, ps.untilTs);
+        await insertStop.run(`stop_${nanoid(6)}`, journeyId, ps.label, ps.lat, ps.lng, ps.radiusM || 100, ps.untilTs);
       }
     }
 
@@ -131,10 +131,10 @@ journeysRouter.post(
   }
 );
 
-journeysRouter.post('/journeys/:id/start', requireAuth, (req: AuthRequest, res: Response) => {
-  const journey = db.prepare(`
+journeysRouter.post('/journeys/:id/start', requireAuth, async (req: AuthRequest, res: Response) => {
+  const journey = (await db.prepare(`
     SELECT * FROM journeys WHERE id = ? AND user_id = ?
-  `).get(req.params.id, req.user!.id) as JourneyRow | undefined;
+  `).get(req.params.id, req.user!.id)) as JourneyRow | undefined;
 
   if (!journey) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Journey not found' } });
@@ -142,12 +142,12 @@ journeysRouter.post('/journeys/:id/start', requireAuth, (req: AuthRequest, res: 
   }
 
   const nowIso = new Date().toISOString();
-  db.prepare(`
+  await db.prepare(`
     UPDATE journeys SET status = 'active', started_at = ?, last_seen_ts = ? WHERE id = ?
   `).run(nowIso, nowIso, journey.id);
 
   // Add event
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO journey_events (id, journey_id, ts, type, payload_json)
     VALUES (?, ?, ?, 'journey_started', '{}')
   `).run(`evt_${nanoid(8)}`, journey.id, nowIso);
@@ -156,7 +156,7 @@ journeysRouter.post('/journeys/:id/start', requireAuth, (req: AuthRequest, res: 
   try {
     const gIds: string[] = JSON.parse(journey.guardian_ids_json);
     for (const gid of gIds) {
-      const guardian = db.prepare(`SELECT * FROM guardians WHERE id = ?`).get(gid) as any;
+      const guardian = (await db.prepare(`SELECT * FROM guardians WHERE id = ?`).get(gid)) as any;
       if (guardian) {
         smsProvider.send({
           toPhone: guardian.phone,
@@ -182,9 +182,9 @@ journeysRouter.post(
   requireAuth,
   validateBody(positionBatchSchema),
   async (req: AuthRequest, res: Response) => {
-    const journey = db.prepare(`
+    const journey = (await db.prepare(`
       SELECT * FROM journeys WHERE id = ? AND user_id = ?
-    `).get(req.params.id, req.user!.id) as JourneyRow | undefined;
+    `).get(req.params.id, req.user!.id)) as JourneyRow | undefined;
 
     if (!journey) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Journey not found' } });
@@ -212,7 +212,7 @@ journeysRouter.post(
     `);
 
     for (const pt of cleanPositions) {
-      insertPt.run(
+      await insertPt.run(
         journey.id,
         pt.ts,
         pt.lat,
@@ -225,15 +225,15 @@ journeysRouter.post(
     }
 
     // Fetch recent points for risk evaluation
-    const recentPoints = db.prepare(`
+    const recentPoints = (await db.prepare(`
       SELECT * FROM journey_points WHERE journey_id = ? ORDER BY id DESC LIMIT 30
-    `).all(journey.id) as JourneyPointRow[];
+    `).all(journey.id)) as JourneyPointRow[];
 
     // Evaluate Risk Engine
-    const evalResult = evaluateJourneyRisk(journey, latest, recentPoints);
+    const evalResult = await evaluateJourneyRisk(journey, latest, recentPoints);
 
     // Update journey state
-    db.prepare(`
+    await db.prepare(`
       UPDATE journeys SET
         level = ?, risk_score = ?, risk_explain_json = ?,
         last_seen_ts = ?, last_lat = ?, last_lng = ?, last_acc = ?,
@@ -258,7 +258,7 @@ journeysRouter.post(
       const timeoutMs = TIMING_PROFILES[profileKey].safetyCheckTimeout;
       const dueAt = new Date(Date.now() + timeoutMs).toISOString();
 
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO safety_checks (id, journey_id, kind, sent_at, due_at)
         VALUES (?, ?, 'risk', ?, ?)
       `).run(checkId, journey.id, latest.ts, dueAt);
@@ -318,28 +318,28 @@ journeysRouter.post(
     const { response } = req.body;
     const nowIso = new Date().toISOString();
 
-    const check = db.prepare(`
+    const check = (await db.prepare(`
       SELECT * FROM safety_checks WHERE id = ? AND journey_id = ?
-    `).get(checkId, id) as any;
+    `).get(checkId, id)) as any;
 
     if (!check) {
       res.status(404).json({ error: { code: 'CHECK_NOT_FOUND', message: 'Safety check not found' } });
       return;
     }
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE safety_checks SET responded_at = ?, response = ? WHERE id = ?
     `).run(nowIso, response, checkId);
 
-    const journey = db.prepare(`SELECT * FROM journeys WHERE id = ?`).get(id) as JourneyRow;
+    const journey = (await db.prepare(`SELECT * FROM journeys WHERE id = ?`).get(id)) as JourneyRow;
 
     if (response === 'safe') {
       // Lower risk score back to Level 0 / 1
-      db.prepare(`
+      await db.prepare(`
         UPDATE journeys SET level = 0, risk_score = 15 WHERE id = ?
       `).run(id);
 
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO journey_events (id, journey_id, ts, type, payload_json)
         VALUES (?, ?, ?, 'safety_check_confirmed_safe', '{}')
       `).run(`evt_${nanoid(8)}`, id, nowIso);
@@ -373,11 +373,11 @@ journeysRouter.post(
   '/journeys/:id/planned-stops',
   requireAuth,
   validateBody(plannedStopSchema),
-  (req: AuthRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const { label, lat, lng, radiusM, untilTs } = req.body;
     const stopId = `stop_${nanoid(8)}`;
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO planned_stops (id, journey_id, label, lat, lng, radius_m, until_ts)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(stopId, req.params.id, label, lat, lng, radiusM || 100, untilTs);
@@ -387,9 +387,9 @@ journeysRouter.post(
 );
 
 journeysRouter.post('/journeys/:id/arrive', requireAuth, async (req: AuthRequest, res: Response) => {
-  const journey = db.prepare(`
+  const journey = (await db.prepare(`
     SELECT * FROM journeys WHERE id = ? AND user_id = ?
-  `).get(req.params.id, req.user!.id) as JourneyRow | undefined;
+  `).get(req.params.id, req.user!.id)) as JourneyRow | undefined;
 
   if (!journey) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Journey not found' } });
@@ -397,11 +397,11 @@ journeysRouter.post('/journeys/:id/arrive', requireAuth, async (req: AuthRequest
   }
 
   const nowIso = new Date().toISOString();
-  db.prepare(`
+  await db.prepare(`
     UPDATE journeys SET status = 'completed', ended_at = ?, level = 0, risk_score = 0 WHERE id = ?
   `).run(nowIso, journey.id);
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO journey_events (id, journey_id, ts, type, payload_json)
     VALUES (?, ?, ?, 'arrived_safe', '{}')
   `).run(`evt_${nanoid(8)}`, journey.id, nowIso);
@@ -410,7 +410,7 @@ journeysRouter.post('/journeys/:id/arrive', requireAuth, async (req: AuthRequest
   try {
     const gIds: string[] = JSON.parse(journey.guardian_ids_json);
     for (const gid of gIds) {
-      const guardian = db.prepare(`SELECT * FROM guardians WHERE id = ?`).get(gid) as any;
+      const guardian = (await db.prepare(`SELECT * FROM guardians WHERE id = ?`).get(gid)) as any;
       if (guardian) {
         smsProvider.send({
           toPhone: guardian.phone,
@@ -433,9 +433,9 @@ journeysRouter.post('/journeys/:id/arrive', requireAuth, async (req: AuthRequest
   res.json({ success: true, message: 'Safe arrival logged. Guardians notified.' });
 });
 
-journeysRouter.post('/journeys/:id/cancel', requireAuth, (req: AuthRequest, res: Response) => {
+journeysRouter.post('/journeys/:id/cancel', requireAuth, async (req: AuthRequest, res: Response) => {
   const nowIso = new Date().toISOString();
-  db.prepare(`
+  await db.prepare(`
     UPDATE journeys SET status = 'cancelled', ended_at = ? WHERE id = ? AND user_id = ?
   `).run(nowIso, req.params.id, req.user!.id);
 

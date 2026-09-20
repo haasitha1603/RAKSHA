@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
-import { db, getStmt } from '../db/index.js';
+import { getStmt } from '../db/index.js';
 import { config } from '../config.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
@@ -35,9 +35,9 @@ authRouter.post(
   authRateLimiter,
   validateBody(signupSchema),
   async (req: Request, res: Response) => {
-    const { username, password, displayName, ageConfirmed18, consents } = req.body;
+    const { username, password, displayName } = req.body;
 
-    const existing = getStmt(`SELECT id FROM users WHERE username = ?`).get(username);
+    const existing = await getStmt(`SELECT id FROM users WHERE username = ?`).get(username);
     if (existing) {
       res.status(409).json({
         error: { code: 'USERNAME_TAKEN', message: 'Username is already in use' },
@@ -59,7 +59,7 @@ authRouter.post(
       textSize: 'normal',
     };
 
-    getStmt(`
+    await getStmt(`
       INSERT INTO users (
         id, username, display_name, password_hash, age_confirmed_at, settings_json, created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -74,7 +74,7 @@ authRouter.post(
     );
 
     // Record required consent
-    getStmt(`
+    await getStmt(`
       INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
       VALUES (?, ?, 'terms_privacy', 1, '1.0', ?)
     `).run(`c_${nanoid(8)}`, userId, now);
@@ -103,7 +103,7 @@ authRouter.post(
     const { username, password } = req.body;
     const normalizedUsername = (username || '').toLowerCase().trim();
 
-    const user = getStmt(`SELECT * FROM users WHERE username = ?`).get(normalizedUsername) as
+    const user = (await getStmt(`SELECT * FROM users WHERE username = ?`).get(normalizedUsername)) as
       | (UserRow & { onboarded_at?: string | null })
       | undefined;
 
@@ -150,20 +150,20 @@ authRouter.post('/auth/logout', (_req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-authRouter.post('/auth/onboarded', requireAuth, (req: AuthRequest, res: Response) => {
+authRouter.post('/auth/onboarded', requireAuth, async (req: AuthRequest, res: Response) => {
   const now = new Date().toISOString();
-  getStmt(`UPDATE users SET onboarded_at = ? WHERE id = ?`).run(now, req.user!.id);
+  await getStmt(`UPDATE users SET onboarded_at = ? WHERE id = ?`).run(now, req.user!.id);
   res.json({ success: true, onboardedAt: now });
 });
 
-authRouter.get('/me', requireAuth, (req: AuthRequest, res: Response) => {
+authRouter.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
   const user = req.user!;
   let parsedSettings = {};
   try {
     parsedSettings = JSON.parse(user.settings_json);
   } catch {}
 
-  const consents = getStmt(`SELECT type, granted, policy_version, created_at FROM consents WHERE user_id = ?`).all(user.id);
+  const consents = await getStmt(`SELECT type, granted, policy_version, created_at FROM consents WHERE user_id = ?`).all(user.id);
 
   res.json({
     user: {
@@ -185,12 +185,12 @@ authRouter.patch(
   '/me',
   requireAuth,
   validateBody(updateMeSchema),
-  (req: AuthRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const user = req.user!;
     const { displayName, settings } = req.body;
 
     if (displayName) {
-      getStmt(`UPDATE users SET display_name = ? WHERE id = ?`).run(displayName.trim(), user.id);
+      await getStmt(`UPDATE users SET display_name = ? WHERE id = ?`).run(displayName.trim(), user.id);
       user.display_name = displayName.trim();
     }
 
@@ -200,7 +200,7 @@ authRouter.patch(
         existingSettings = JSON.parse(user.settings_json);
       } catch {}
       const merged = { ...existingSettings, ...settings };
-      getStmt(`UPDATE users SET settings_json = ? WHERE id = ?`).run(JSON.stringify(merged), user.id);
+      await getStmt(`UPDATE users SET settings_json = ? WHERE id = ?`).run(JSON.stringify(merged), user.id);
       user.settings_json = JSON.stringify(merged);
     }
 
@@ -228,7 +228,7 @@ authRouter.post(
     const safetyHash = await bcrypt.hash(safetyPin, 10);
     const duressHash = await bcrypt.hash(duressPin, 10);
 
-    getStmt(`
+    await getStmt(`
       UPDATE users SET safety_pin_hash = ?, duress_pin_hash = ? WHERE id = ?
     `).run(safetyHash, duressHash, user.id);
 
@@ -239,8 +239,8 @@ authRouter.post(
   }
 );
 
-authRouter.get('/consents', requireAuth, (req: AuthRequest, res: Response) => {
-  const consents = getStmt(`SELECT * FROM consents WHERE user_id = ?`).all(req.user!.id);
+authRouter.get('/consents', requireAuth, async (req: AuthRequest, res: Response) => {
+  const consents = await getStmt(`SELECT * FROM consents WHERE user_id = ?`).all(req.user!.id);
   res.json({ consents });
 });
 
@@ -248,16 +248,16 @@ authRouter.post(
   '/consents',
   requireAuth,
   validateBody(consentUpdateSchema),
-  (req: AuthRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const { type, granted } = req.body;
     const now = new Date().toISOString();
 
-    const existing = getStmt(`SELECT id FROM consents WHERE user_id = ? AND type = ?`).get(req.user!.id, type) as { id: string } | undefined;
+    const existing = (await getStmt(`SELECT id FROM consents WHERE user_id = ? AND type = ?`).get(req.user!.id, type)) as { id: string } | undefined;
 
     if (existing) {
-      getStmt(`UPDATE consents SET granted = ?, created_at = ? WHERE id = ?`).run(granted ? 1 : 0, now, existing.id);
+      await getStmt(`UPDATE consents SET granted = ?, created_at = ? WHERE id = ?`).run(granted ? 1 : 0, now, existing.id);
     } else {
-      getStmt(`
+      await getStmt(`
         INSERT INTO consents (id, user_id, type, granted, policy_version, created_at)
         VALUES (?, ?, ?, ?, '1.0', ?)
       `).run(`c_${nanoid(8)}`, req.user!.id, type, granted ? 1 : 0, now);
@@ -267,19 +267,19 @@ authRouter.post(
   }
 );
 
-authRouter.get('/me/export', requireAuth, (req: AuthRequest, res: Response) => {
+authRouter.get('/me/export', requireAuth, async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
 
-  const userData = getStmt(`
+  const userData = await getStmt(`
     SELECT id, username, display_name, age_confirmed_at, settings_json, false_alarm_count, created_at
     FROM users WHERE id = ?
   `).get(userId);
 
-  const consents = getStmt(`SELECT * FROM consents WHERE user_id = ?`).all(userId);
-  const guardians = getStmt(`SELECT id, name, phone, relation, priority, status, created_at FROM guardians WHERE user_id = ?`).all(userId);
-  const journeys = getStmt(`SELECT * FROM journeys WHERE user_id = ?`).all(userId);
-  const incidents = getStmt(`SELECT * FROM incidents WHERE user_id = ?`).all(userId);
-  const fakeCalls = getStmt(`SELECT * FROM fake_calls WHERE user_id = ?`).all(userId);
+  const consents = await getStmt(`SELECT * FROM consents WHERE user_id = ?`).all(userId);
+  const guardians = await getStmt(`SELECT id, name, phone, relation, priority, status, created_at FROM guardians WHERE user_id = ?`).all(userId);
+  const journeys = await getStmt(`SELECT * FROM journeys WHERE user_id = ?`).all(userId);
+  const incidents = await getStmt(`SELECT * FROM incidents WHERE user_id = ?`).all(userId);
+  const fakeCalls = await getStmt(`SELECT * FROM fake_calls WHERE user_id = ?`).all(userId);
 
   const exportPayload = {
     exportedAt: new Date().toISOString(),
@@ -312,8 +312,8 @@ authRouter.delete('/me', requireAuth, async (req: AuthRequest, res: Response) =>
   }
 
   // Hard cascade delete: delete user cascades to consents, guardians, journeys, incidents, fake_calls
-  getStmt(`DELETE FROM push_subscriptions WHERE owner_type = 'user' AND owner_id = ?`).run(user.id);
-  getStmt(`DELETE FROM users WHERE id = ?`).run(user.id);
+  await getStmt(`DELETE FROM push_subscriptions WHERE owner_type = 'user' AND owner_id = ?`).run(user.id);
+  await getStmt(`DELETE FROM users WHERE id = ?`).run(user.id);
 
   res.clearCookie('raksha_session', { path: '/' });
   res.json({ success: true, message: 'Account and all associated personal data have been permanently deleted.' });

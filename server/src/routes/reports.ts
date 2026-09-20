@@ -21,14 +21,14 @@ function hashReporter(userId: string): string {
   return crypto.createHash('sha256').update(`${userId}:raksha_salt_2026`).digest('hex').substring(0, 16);
 }
 
-reportsRouter.get('/reports', (req: Request, res: Response) => {
+reportsRouter.get('/reports', async (req: Request, res: Response) => {
   const category = req.query.category as string;
   const sinceDays = req.query.sinceDays ? parseInt(req.query.sinceDays as string) : 30;
   const cutoff = new Date(Date.now() - sinceDays * 86400000).toISOString();
 
   let query = `
     SELECT * FROM reports
-    WHERE status != 'removed' AND status != 'expired' AND datetime(created_at) >= datetime(?)
+    WHERE status != 'removed' AND status != 'expired' AND created_at >= ?
   `;
   const params: any[] = [cutoff];
 
@@ -39,7 +39,7 @@ reportsRouter.get('/reports', (req: Request, res: Response) => {
 
   query += ` ORDER BY created_at DESC LIMIT 100`;
 
-  const reports = db.prepare(query).all(...params);
+  const reports = await db.prepare(query).all(...params);
   res.json({ reports });
 });
 
@@ -54,7 +54,7 @@ reportsRouter.post(
   requireAuth,
   reportRateLimiter,
   validateBody(createReportSchema),
-  (req: AuthRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const { category, severity, text, lat, lng } = req.body;
     const user = req.user!;
     const reporterHash = hashReporter(user.id);
@@ -66,10 +66,10 @@ reportsRouter.post(
 
     // Duplicate suppression: no second report within 100m and 30min by the same user
     const thirtyMinAgo = new Date(Date.now() - 30 * 60000).toISOString();
-    const recentReports = db.prepare(`
+    const recentReports = (await db.prepare(`
       SELECT lat, lng FROM reports
-      WHERE reporter_hash = ? AND datetime(created_at) >= datetime(?)
-    `).all(reporterHash, thirtyMinAgo) as Array<{ lat: number; lng: number }>;
+      WHERE reporter_hash = ? AND created_at >= ?
+    `).all(reporterHash, thirtyMinAgo)) as Array<{ lat: number; lng: number }>;
 
     for (const r of recentReports) {
       if (haversineDistance(roundedLat, roundedLng, r.lat, r.lng) < 100) {
@@ -104,9 +104,9 @@ reportsRouter.post(
       is_demo: 0,
     };
 
-    const initialConf = computeReportConfidence(tempReport);
+    const initialConf = await computeReportConfidence(tempReport);
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO reports (
         id, reporter_hash, category, severity, text, lat, lng,
         created_at, expires_at, confirmations, denials, flags, confidence, status, is_demo
@@ -125,7 +125,7 @@ reportsRouter.post(
       initialConf.status
     );
 
-    const created = db.prepare(`SELECT * FROM reports WHERE id = ?`).get(reportId);
+    const created = await db.prepare(`SELECT * FROM reports WHERE id = ?`).get(reportId);
 
     emitToRoom('reports', 'report:new', created);
 
@@ -137,14 +137,14 @@ reportsRouter.post(
   '/reports/:id/vote',
   requireAuth,
   validateBody(voteReportSchema),
-  (req: AuthRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { vote } = req.body;
     const user = req.user!;
     const voterHash = hashReporter(user.id);
     const nowIso = new Date().toISOString();
 
-    const report = db.prepare(`SELECT * FROM reports WHERE id = ?`).get(id) as ReportRow | undefined;
+    const report = (await db.prepare(`SELECT * FROM reports WHERE id = ?`).get(id)) as ReportRow | undefined;
     if (!report) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Report not found' } });
       return;
@@ -157,37 +157,38 @@ reportsRouter.post(
     }
 
     // Insert or replace vote
-    const existingVote = db.prepare(`
+    const existingVote = (await db.prepare(`
       SELECT vote FROM report_votes WHERE report_id = ? AND voter_hash = ?
-    `).get(id, voterHash) as { vote: string } | undefined;
+    `).get(id, voterHash)) as { vote: string } | undefined;
 
     if (existingVote) {
       if (existingVote.vote === vote) {
         res.json({ success: true, message: 'Vote already recorded.' });
         return;
       }
-      db.prepare(`UPDATE report_votes SET vote = ? WHERE report_id = ? AND voter_hash = ?`).run(vote, id, voterHash);
+      await db.prepare(`UPDATE report_votes SET vote = ? WHERE report_id = ? AND voter_hash = ?`).run(vote, id, voterHash);
     } else {
-      db.prepare(`
+      await db.prepare(`
         INSERT INTO report_votes (id, report_id, voter_hash, vote, created_at)
         VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT (report_id, voter_hash) DO UPDATE SET vote = EXCLUDED.vote, created_at = EXCLUDED.created_at
       `).run(`vote_${nanoid(8)}`, id, voterHash, vote, nowIso);
     }
 
     // Recalculate totals
-    const counts = db.prepare(`
+    const counts = (await db.prepare(`
       SELECT
         SUM(CASE WHEN vote = 'confirm' THEN 1 ELSE 0 END) as conf,
         SUM(CASE WHEN vote = 'deny' THEN 1 ELSE 0 END) as den
       FROM report_votes WHERE report_id = ?
-    `).get(id) as any;
+    `).get(id)) as any;
 
-    report.confirmations = counts.conf || 0;
-    report.denials = counts.den || 0;
+    report.confirmations = Number(counts?.conf || 0);
+    report.denials = Number(counts?.den || 0);
 
-    const confResult = computeReportConfidence(report);
+    const confResult = await computeReportConfidence(report);
 
-    db.prepare(`
+    await db.prepare(`
       UPDATE reports SET
         confirmations = ?, denials = ?, confidence = ?, status = ?
       WHERE id = ?
@@ -203,19 +204,19 @@ reportsRouter.post(
   }
 );
 
-reportsRouter.post('/reports/:id/flag', requireAuth, (req: AuthRequest, res: Response) => {
+reportsRouter.post('/reports/:id/flag', requireAuth, async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const report = db.prepare(`SELECT * FROM reports WHERE id = ?`).get(id) as ReportRow | undefined;
+  const report = (await db.prepare(`SELECT * FROM reports WHERE id = ?`).get(id)) as ReportRow | undefined;
   if (!report) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Report not found' } });
     return;
   }
 
-  db.prepare(`UPDATE reports SET flags = flags + 1 WHERE id = ?`).run(id);
+  await db.prepare(`UPDATE reports SET flags = flags + 1 WHERE id = ?`).run(id);
   report.flags += 1;
 
-  const confResult = computeReportConfidence(report);
-  db.prepare(`UPDATE reports SET confidence = ?, status = ? WHERE id = ?`).run(confResult.confidence, confResult.status, id);
+  const confResult = await computeReportConfidence(report);
+  await db.prepare(`UPDATE reports SET confidence = ?, status = ? WHERE id = ?`).run(confResult.confidence, confResult.status, id);
 
   res.json({ success: true, flags: report.flags });
 });

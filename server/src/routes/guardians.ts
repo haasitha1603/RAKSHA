@@ -23,8 +23,8 @@ export const guardiansRouter = Router();
 
 // ================= USER ENDPOINTS =================
 
-guardiansRouter.get('/guardians', requireAuth, (req: AuthRequest, res: Response) => {
-  const guardians = db.prepare(`
+guardiansRouter.get('/guardians', requireAuth, async (req: AuthRequest, res: Response) => {
+  const guardians = await db.prepare(`
     SELECT * FROM guardians WHERE user_id = ? ORDER BY priority ASC, created_at DESC
   `).all(req.user!.id);
   res.json({ guardians });
@@ -34,12 +34,13 @@ guardiansRouter.post(
   '/guardians',
   requireAuth,
   validateBody(createGuardianSchema),
-  (req: AuthRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     const { name, phone, relation, priority, toldConfirmed } = req.body;
     const userId = req.user!.id;
 
     // Limit to max 5 guardians
-    const count = (db.prepare(`SELECT COUNT(*) as c FROM guardians WHERE user_id = ?`).get(userId) as any).c;
+    const countRow = (await db.prepare(`SELECT COUNT(*) as c FROM guardians WHERE user_id = ?`).get(userId)) as any;
+    const count = Number(countRow?.c || 0);
     if (count >= 5) {
       res.status(400).json({ error: { code: 'GUARDIAN_LIMIT', message: 'You can add up to 5 guardians' } });
       return;
@@ -49,7 +50,7 @@ guardiansRouter.post(
     const token = `gtok_${nanoid(20)}`;
     const nowIso = new Date().toISOString();
 
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO guardians (
         id, user_id, name, phone, relation, priority, status, token, told_confirmed, created_at
       ) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
@@ -77,15 +78,15 @@ guardiansRouter.post(
   }
 );
 
-guardiansRouter.patch('/guardians/:id', requireAuth, (req: AuthRequest, res: Response) => {
+guardiansRouter.patch('/guardians/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   const { name, phone, relation, priority } = req.body;
-  const guardian = db.prepare(`SELECT * FROM guardians WHERE id = ? AND user_id = ?`).get(req.params.id, req.user!.id);
+  const guardian = await db.prepare(`SELECT * FROM guardians WHERE id = ? AND user_id = ?`).get(req.params.id, req.user!.id);
   if (!guardian) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Guardian not found' } });
     return;
   }
 
-  db.prepare(`
+  await db.prepare(`
     UPDATE guardians SET
       name = COALESCE(?, name),
       phone = COALESCE(?, phone),
@@ -97,15 +98,15 @@ guardiansRouter.patch('/guardians/:id', requireAuth, (req: AuthRequest, res: Res
   res.json({ success: true });
 });
 
-guardiansRouter.delete('/guardians/:id', requireAuth, (req: AuthRequest, res: Response) => {
-  db.prepare(`DELETE FROM guardians WHERE id = ? AND user_id = ?`).run(req.params.id, req.user!.id);
+guardiansRouter.delete('/guardians/:id', requireAuth, async (req: AuthRequest, res: Response) => {
+  await db.prepare(`DELETE FROM guardians WHERE id = ? AND user_id = ?`).run(req.params.id, req.user!.id);
   res.json({ success: true });
 });
 
 guardiansRouter.post('/guardians/:id/test', requireAuth, async (req: AuthRequest, res: Response) => {
-  const guardian = db.prepare(`
+  const guardian = (await db.prepare(`
     SELECT * FROM guardians WHERE id = ? AND user_id = ?
-  `).get(req.params.id, req.user!.id) as GuardianRow | undefined;
+  `).get(req.params.id, req.user!.id)) as GuardianRow | undefined;
 
   if (!guardian) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Guardian not found' } });
@@ -129,45 +130,45 @@ guardiansRouter.post('/guardians/:id/test', requireAuth, async (req: AuthRequest
   res.json({ success: true, message: `Test alert sent to ${guardian.name}.` });
 });
 
-guardiansRouter.post('/guardians/:id/revoke', requireAuth, (req: AuthRequest, res: Response) => {
+guardiansRouter.post('/guardians/:id/revoke', requireAuth, async (req: AuthRequest, res: Response) => {
   const newToken = `gtok_${nanoid(20)}`;
-  db.prepare(`UPDATE guardians SET token = ? WHERE id = ? AND user_id = ?`).run(newToken, req.params.id, req.user!.id);
+  await db.prepare(`UPDATE guardians SET token = ? WHERE id = ? AND user_id = ?`).run(newToken, req.params.id, req.user!.id);
   res.json({ success: true, token: newToken });
 });
 
 // ================= PUBLIC /g/:token ENDPOINTS =================
 
-guardiansRouter.get('/g/:token', (req: Request, res: Response) => {
-  const guardian = db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token) as GuardianRow | undefined;
+guardiansRouter.get('/g/:token', async (req: Request, res: Response) => {
+  const guardian = (await db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token)) as GuardianRow | undefined;
   if (!guardian) {
     res.status(404).json({ error: { code: 'INVALID_TOKEN', message: 'Guardian link expired or invalid' } });
     return;
   }
 
-  const user = db.prepare(`SELECT id, display_name FROM users WHERE id = ?`).get(guardian.user_id) as UserRow;
+  const user = (await db.prepare(`SELECT id, display_name FROM users WHERE id = ?`).get(guardian.user_id)) as UserRow;
 
   // Log access
   const nowIso = new Date().toISOString();
-  db.prepare(`UPDATE guardians SET last_viewed_at = ? WHERE id = ?`).run(nowIso, guardian.id);
+  await db.prepare(`UPDATE guardians SET last_viewed_at = ? WHERE id = ?`).run(nowIso, guardian.id);
 
   // Check active journey
-  const activeJourney = db.prepare(`
+  const activeJourney = (await db.prepare(`
     SELECT * FROM journeys WHERE user_id = ? AND status IN ('active', 'emergency')
     ORDER BY started_at DESC LIMIT 1
-  `).get(user.id) as JourneyRow | undefined;
+  `).get(user.id)) as JourneyRow | undefined;
 
   if (activeJourney) {
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO guardian_access_log (id, guardian_id, journey_id, ts)
       VALUES (?, ?, ?, ?)
     `).run(`gal_${nanoid(8)}`, guardian.id, activeJourney.id, nowIso);
   }
 
   // Check active incident
-  const activeIncident = db.prepare(`
+  const activeIncident = (await db.prepare(`
     SELECT * FROM incidents WHERE user_id = ? AND status IN ('open', 'acknowledged')
     ORDER BY created_at DESC LIMIT 1
-  `).get(user.id) as IncidentRow | undefined;
+  `).get(user.id)) as IncidentRow | undefined;
 
   let packet;
   if (activeIncident) {
@@ -179,7 +180,7 @@ guardiansRouter.get('/g/:token', (req: Request, res: Response) => {
   // Build timeline
   let timeline: any[] = [];
   if (activeJourney) {
-    timeline = db.prepare(`
+    timeline = await db.prepare(`
       SELECT * FROM journey_events WHERE journey_id = ? ORDER BY ts DESC
     `).all(activeJourney.id);
   }
@@ -243,62 +244,62 @@ guardiansRouter.get('/g/:token', (req: Request, res: Response) => {
   res.json(snapshot);
 });
 
-guardiansRouter.post('/g/:token/accept', (req: Request, res: Response) => {
-  const guardian = db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token) as GuardianRow | undefined;
+guardiansRouter.post('/g/:token/accept', async (req: Request, res: Response) => {
+  const guardian = (await db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token)) as GuardianRow | undefined;
   if (!guardian) {
     res.status(404).json({ error: { code: 'INVALID_TOKEN', message: 'Invalid token' } });
     return;
   }
 
-  db.prepare(`UPDATE guardians SET status = 'accepted' WHERE id = ?`).run(guardian.id);
+  await db.prepare(`UPDATE guardians SET status = 'accepted' WHERE id = ?`).run(guardian.id);
   res.json({ success: true, status: 'accepted' });
 });
 
-guardiansRouter.post('/g/:token/leave', (req: Request, res: Response) => {
-  const guardian = db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token) as GuardianRow | undefined;
+guardiansRouter.post('/g/:token/leave', async (req: Request, res: Response) => {
+  const guardian = (await db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token)) as GuardianRow | undefined;
   if (!guardian) {
     res.status(404).json({ error: { code: 'INVALID_TOKEN', message: 'Invalid token' } });
     return;
   }
 
-  db.prepare(`UPDATE guardians SET status = 'left' WHERE id = ?`).run(guardian.id);
+  await db.prepare(`UPDATE guardians SET status = 'left' WHERE id = ?`).run(guardian.id);
   res.json({ success: true, status: 'left' });
 });
 
-guardiansRouter.post('/g/:token/ack', (req: Request, res: Response) => {
-  const guardian = db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token) as GuardianRow | undefined;
+guardiansRouter.post('/g/:token/ack', async (req: Request, res: Response) => {
+  const guardian = (await db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token)) as GuardianRow | undefined;
   if (!guardian) {
     res.status(404).json({ error: { code: 'INVALID_TOKEN', message: 'Invalid token' } });
     return;
   }
 
-  const activeIncident = db.prepare(`
+  const activeIncident = (await db.prepare(`
     SELECT * FROM incidents WHERE user_id = ? AND status IN ('open', 'acknowledged')
     ORDER BY created_at DESC LIMIT 1
-  `).get(guardian.user_id) as IncidentRow | undefined;
+  `).get(guardian.user_id)) as IncidentRow | undefined;
 
   if (activeIncident) {
-    acknowledgeIncident(activeIncident.id, 'guardian', guardian.id);
+    await acknowledgeIncident(activeIncident.id, 'guardian', guardian.id);
   }
 
   res.json({ success: true });
 });
 
-guardiansRouter.post('/g/:token/on-my-way', (req: Request, res: Response) => {
-  const guardian = db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token) as GuardianRow | undefined;
+guardiansRouter.post('/g/:token/on-my-way', async (req: Request, res: Response) => {
+  const guardian = (await db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token)) as GuardianRow | undefined;
   if (!guardian) {
     res.status(404).json({ error: { code: 'INVALID_TOKEN', message: 'Invalid token' } });
     return;
   }
 
   const nowIso = new Date().toISOString();
-  const activeJourney = db.prepare(`
+  const activeJourney = (await db.prepare(`
     SELECT * FROM journeys WHERE user_id = ? AND status IN ('active', 'emergency')
     ORDER BY started_at DESC LIMIT 1
-  `).get(guardian.user_id) as JourneyRow | undefined;
+  `).get(guardian.user_id)) as JourneyRow | undefined;
 
   if (activeJourney) {
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO journey_events (id, journey_id, ts, type, payload_json)
       VALUES (?, ?, ?, 'guardian_on_my_way', ?)
     `).run(`evt_${nanoid(8)}`, activeJourney.id, nowIso, JSON.stringify({ guardianName: guardian.name }));
@@ -313,17 +314,17 @@ guardiansRouter.post('/g/:token/on-my-way', (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-guardiansRouter.post('/g/:token/request-checkin', (req: Request, res: Response) => {
-  const guardian = db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token) as GuardianRow | undefined;
+guardiansRouter.post('/g/:token/request-checkin', async (req: Request, res: Response) => {
+  const guardian = (await db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token)) as GuardianRow | undefined;
   if (!guardian) {
     res.status(404).json({ error: { code: 'INVALID_TOKEN', message: 'Invalid token' } });
     return;
   }
 
-  const activeJourney = db.prepare(`
+  const activeJourney = (await db.prepare(`
     SELECT * FROM journeys WHERE user_id = ? AND status = 'active'
     ORDER BY started_at DESC LIMIT 1
-  `).get(guardian.user_id) as JourneyRow | undefined;
+  `).get(guardian.user_id)) as JourneyRow | undefined;
 
   if (!activeJourney) {
     res.status(400).json({ error: { code: 'NO_ACTIVE_JOURNEY', message: 'No active journey in progress' } });
@@ -336,7 +337,7 @@ guardiansRouter.post('/g/:token/request-checkin', (req: Request, res: Response) 
   const nowIso = new Date().toISOString();
   const dueAt = new Date(Date.now() + timeoutMs).toISOString();
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO safety_checks (id, journey_id, kind, sent_at, due_at)
     VALUES (?, ?, 'guardian_request', ?, ?)
   `).run(checkId, activeJourney.id, nowIso, dueAt);
@@ -354,8 +355,8 @@ guardiansRouter.post('/g/:token/request-checkin', (req: Request, res: Response) 
 guardiansRouter.post(
   '/g/:token/push-subscribe',
   validateBody(pushSubscribeSchema),
-  (req: Request, res: Response) => {
-    const guardian = db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token) as GuardianRow | undefined;
+  async (req: Request, res: Response) => {
+    const guardian = (await db.prepare(`SELECT * FROM guardians WHERE token = ?`).get(req.params.token)) as GuardianRow | undefined;
     if (!guardian) {
       res.status(404).json({ error: { code: 'INVALID_TOKEN', message: 'Invalid token' } });
       return;
@@ -364,9 +365,10 @@ guardiansRouter.post(
     const { endpoint, keys } = req.body;
     const nowIso = new Date().toISOString();
 
-    db.prepare(`
-      INSERT OR REPLACE INTO push_subscriptions (id, owner_type, owner_id, endpoint, keys_json, created_at)
+    await db.prepare(`
+      INSERT INTO push_subscriptions (id, owner_type, owner_id, endpoint, keys_json, created_at)
       VALUES (?, 'guardian', ?, ?, ?, ?)
+      ON CONFLICT (endpoint) DO UPDATE SET keys_json = EXCLUDED.keys_json, created_at = EXCLUDED.created_at
     `).run(`ps_${nanoid(8)}`, guardian.id, endpoint, JSON.stringify(keys), nowIso);
 
     res.json({ success: true });
