@@ -11,10 +11,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "declaration": true,
-    "declarationMap": true,
-    "paths": {
-      "@raksha/shared": ["./shared/src/index.ts"],
-      "@raksha/shared/*": ["./shared/src/*"]
-    }
+    "declarationMap": true
   }
 }
