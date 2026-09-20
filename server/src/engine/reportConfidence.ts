@@ -7,24 +7,24 @@ import {
   REPORT_HARD_EXPIRY_HOURS,
 } from '@raksha/shared';
 
-export function computeReportConfidence(report: ReportRow): {
+export async function computeReportConfidence(report: ReportRow): Promise<{
   confidence: number;
   status: ReportStatus;
   isExpired: boolean;
-} {
+}> {
   const base = 0.25;
 
   // Corroboration: distinct other reporters within 150m in last 7 days, same/related category
   const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-  const nearbyOtherReports = db.prepare(`
+  const nearbyOtherReports = await db.prepare(`
     SELECT DISTINCT reporter_hash, category, lat, lng FROM reports
     WHERE id != ? AND reporter_hash != ? AND datetime(created_at) >= datetime(?)
-  `).all(report.id, report.reporter_hash, sevenDaysAgo) as Array<{
+  `).all<{
     reporter_hash: string;
     category: string;
     lat: number;
     lng: number;
-  }>;
+  }>(report.id, report.reporter_hash, sevenDaysAgo);
 
   const corroboratingCount = nearbyOtherReports.filter((r) => {
     const dist = haversineDistance(report.lat, report.lng, r.lat, r.lng);
@@ -68,17 +68,17 @@ export function computeReportConfidence(report: ReportRow): {
   return { confidence, status, isExpired };
 }
 
-export function recomputeAllReports(): void {
-  const activeReports = db.prepare(`
+export async function recomputeAllReports(): Promise<void> {
+  const activeReports = await db.prepare(`
     SELECT * FROM reports WHERE status NOT IN ('expired', 'removed')
-  `).all() as ReportRow[];
-
-  const updateStmt = db.prepare(`
-    UPDATE reports SET confidence = ?, status = ? WHERE id = ?
-  `);
+  `).all<ReportRow>();
 
   for (const rep of activeReports) {
-    const result = computeReportConfidence(rep);
-    updateStmt.run(result.confidence, result.status, rep.id);
+    const result = await computeReportConfidence(rep);
+    await db.prepare(`UPDATE reports SET confidence = ?, status = ? WHERE id = ?`).run(
+      result.confidence,
+      result.status,
+      rep.id
+    );
   }
 }

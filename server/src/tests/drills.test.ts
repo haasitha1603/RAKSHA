@@ -36,20 +36,20 @@ describe('Safety Drills Scenario Matrix & Suppression Tests', () => {
     const nowIso = new Date().toISOString();
 
     // Create test user
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO users (id, username, password_hash, display_name, age_confirmed_at, created_at)
       VALUES (?, ?, 'hash', 'Drill Tester', ?, ?)
     `).run(testUserId, `drilluser_${Date.now()}`, nowIso, nowIso);
 
     // Create test guardian
     const guardianId = `g_${nanoid(8)}`;
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO guardians (id, user_id, name, phone, relation, token, status, created_at)
       VALUES (?, ?, 'Drill Guardian', '+919876543210', 'Friend', ?, 'accepted', ?)
     `).run(guardianId, testUserId, `tok_${nanoid(12)}`, nowIso);
 
     // Create drill journey (drill = 1)
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO journeys (
         id, user_id, status, mode, origin_json, dest_json, route_json,
         planned_eta_ts, timing_profile, simulated, level, risk_score,
@@ -70,7 +70,7 @@ describe('Safety Drills Scenario Matrix & Suppression Tests', () => {
     expect(incidentId).toBeDefined();
 
     // Check outbox entries
-    const outboxEntries = db.prepare(`
+    const outboxEntries = await db.prepare(`
       SELECT * FROM outbox WHERE journey_id = ?
     `).all(testJourneyId) as any[];
 

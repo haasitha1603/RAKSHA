@@ -8,7 +8,7 @@ export function initSockets(io: SocketIOServer): void {
   ioInstance = io;
 
   io.on('connection', (socket: Socket) => {
-    socket.on('join', (data: { room: string; token?: string; passcode?: string }) => {
+    socket.on('join', async (data: { room: string; token?: string; passcode?: string }) => {
       if (!data?.room) return;
 
       const { room, token, passcode } = data;
@@ -18,8 +18,8 @@ export function initSockets(io: SocketIOServer): void {
         const journeyId = room.replace('journey:', '');
         if (token) {
           // Verify guardian token belongs to this journey or user
-          const guardian = db.prepare(`SELECT id, user_id FROM guardians WHERE token = ?`).get(token) as { id: string; user_id: string } | undefined;
-          const journey = db.prepare(`SELECT id, user_id, guardian_ids_json FROM journeys WHERE id = ?`).get(journeyId) as { id: string; user_id: string; guardian_ids_json: string } | undefined;
+          const guardian = await db.prepare(`SELECT id, user_id FROM guardians WHERE token = ?`).get<{ id: string; user_id: string }>(token);
+          const journey = await db.prepare(`SELECT id, user_id, guardian_ids_json FROM journeys WHERE id = ?`).get<{ id: string; user_id: string; guardian_ids_json: string }>(journeyId);
 
           if (guardian && journey && (journey.user_id === guardian.user_id || journey.guardian_ids_json.includes(guardian.id))) {
             socket.join(room);

@@ -1069,12 +1069,6 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\@types\\bcryptjs",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\@types\\bcryptjs\\LICENSE"
   },
-  "@types/better-sqlite3@7.6.13": {
-    "licenses": "MIT",
-    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\@types\\better-sqlite3",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\@types\\better-sqlite3\\LICENSE"
-  },
   "@types/body-parser@1.19.6": {
     "licenses": "MIT",
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
@@ -1176,6 +1170,12 @@
     "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\@types\\node",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\@types\\node\\LICENSE"
+  },
+  "@types/pg@8.23.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\@types\\pg",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\@types\\pg\\LICENSE"
   },
   "@types/prop-types@15.7.15": {
     "licenses": "MIT",
@@ -1589,14 +1589,6 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bcryptjs",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bcryptjs\\LICENSE"
   },
-  "better-sqlite3@11.10.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/WiseLibs/better-sqlite3",
-    "publisher": "Joshua Wise",
-    "email": "joshuathomaswise@gmail.com",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\better-sqlite3",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\better-sqlite3\\LICENSE"
-  },
   "binary-extensions@2.3.0": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/binary-extensions",
@@ -1605,21 +1597,6 @@
     "url": "https://sindresorhus.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\binary-extensions",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\binary-extensions\\license"
-  },
-  "bindings@1.5.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/TooTallNate/node-bindings",
-    "publisher": "Nathan Rajlich",
-    "email": "nathan@tootallnate.net",
-    "url": "http://tootallnate.net",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bindings",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bindings\\LICENSE.md"
-  },
-  "bl@4.1.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/rvagg/bl",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bl",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bl\\LICENSE.md"
   },
   "bn.js@4.12.5": {
     "licenses": "MIT",
@@ -1687,15 +1664,6 @@
     "repository": "https://github.com/LinusU/buffer-from",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\buffer-from",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\buffer-from\\LICENSE"
-  },
-  "buffer@5.7.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/feross/buffer",
-    "publisher": "Feross Aboukhadijeh",
-    "email": "feross@feross.org",
-    "url": "https://feross.org",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bl\\node_modules\\buffer",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bl\\node_modules\\buffer\\LICENSE"
   },
   "buffer@6.0.3": {
     "licenses": "MIT",
@@ -1801,15 +1769,6 @@
     "url": "https://paulmillr.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\chokidar",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\chokidar\\LICENSE"
-  },
-  "chownr@1.1.4": {
-    "licenses": "ISC",
-    "repository": "https://github.com/isaacs/chownr",
-    "publisher": "Isaac Z. Schlueter",
-    "email": "i@izs.me",
-    "url": "http://blog.izs.me/",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\chownr",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\chownr\\LICENSE"
   },
   "class-variance-authority@0.7.1": {
     "licenses": "Apache-2.0",
@@ -2147,15 +2106,6 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\debuglog",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\debuglog\\LICENSE"
   },
-  "decompress-response@6.0.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/decompress-response",
-    "publisher": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "https://sindresorhus.com",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\decompress-response",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\decompress-response\\license"
-  },
   "deep-eql@4.1.4": {
     "licenses": "MIT",
     "repository": "https://github.com/chaijs/deep-eql",
@@ -2163,14 +2113,6 @@
     "email": "jake@alogicalparadox.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\deep-eql",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\deep-eql\\LICENSE"
-  },
-  "deep-extend@0.6.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/unclechu/node-deep-extend",
-    "publisher": "Viacheslav Lotsmanov",
-    "email": "lotsmanov89@gmail.com",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\deep-extend",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\deep-extend\\LICENSE"
   },
   "deepmerge@4.3.1": {
     "licenses": "MIT",
@@ -2516,14 +2458,6 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\execa",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\execa\\license"
   },
-  "expand-template@2.0.3": {
-    "licenses": "(MIT OR WTFPL)",
-    "repository": "https://github.com/ralphtheninja/expand-template",
-    "publisher": "LM",
-    "email": "ralphtheninja@riseup.net",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\expand-template",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\expand-template\\LICENSE"
-  },
   "express-rate-limit@7.5.1": {
     "licenses": "MIT",
     "repository": "https://github.com/express-rate-limit/express-rate-limit",
@@ -2602,15 +2536,6 @@
     "email": "thecodrr@protonmail.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tinyglobby\\node_modules\\fdir",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tinyglobby\\node_modules\\fdir\\LICENSE"
-  },
-  "file-uri-to-path@1.0.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/TooTallNate/file-uri-to-path",
-    "publisher": "Nathan Rajlich",
-    "email": "nathan@tootallnate.net",
-    "url": "http://n8.io/",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\file-uri-to-path",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\file-uri-to-path\\LICENSE"
   },
   "filelist@1.0.6": {
     "licenses": "Apache-2.0",
@@ -2699,14 +2624,6 @@
     "url": "http://tjholowaychuk.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\fresh",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\fresh\\LICENSE"
-  },
-  "fs-constants@1.0.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/mafintosh/fs-constants",
-    "publisher": "Mathias Buus",
-    "url": "@mafintosh",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\fs-constants",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\fs-constants\\LICENSE"
   },
   "fs-extra@9.1.0": {
     "licenses": "MIT",
@@ -2822,15 +2739,6 @@
     "email": "ljharb@gmail.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\get-symbol-description",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\get-symbol-description\\LICENSE"
-  },
-  "github-from-package@0.0.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/substack/github-from-package",
-    "publisher": "James Halliday",
-    "email": "mail@substack.net",
-    "url": "http://substack.net",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\github-from-package",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\github-from-package\\LICENSE"
   },
   "glob-parent@5.1.2": {
     "licenses": "ISC",
@@ -3064,15 +2972,6 @@
     "repository": "https://github.com/isaacs/inherits",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\inherits",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\inherits\\LICENSE"
-  },
-  "ini@1.3.8": {
-    "licenses": "ISC",
-    "repository": "https://github.com/isaacs/ini",
-    "publisher": "Isaac Z. Schlueter",
-    "email": "i@izs.me",
-    "url": "http://blog.izs.me/",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\ini",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\ini\\LICENSE"
   },
   "internal-slot@1.1.0": {
     "licenses": "MIT",
@@ -3783,15 +3682,6 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\mimic-fn",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\mimic-fn\\license"
   },
-  "mimic-response@3.1.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/mimic-response",
-    "publisher": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "https://sindresorhus.com",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\mimic-response",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\mimic-response\\license"
-  },
   "minimalistic-assert@1.0.1": {
     "licenses": "ISC",
     "repository": "https://github.com/calvinmetcalf/minimalistic-assert",
@@ -3842,14 +3732,6 @@
     "url": "http://blog.izs.me/",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\minipass",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\minipass\\LICENSE.md"
-  },
-  "mkdirp-classic@0.5.3": {
-    "licenses": "MIT",
-    "repository": "https://github.com/mafintosh/mkdirp-classic",
-    "publisher": "Mathias Buus",
-    "url": "@mafintosh",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\mkdirp-classic",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\mkdirp-classic\\LICENSE"
   },
   "mkdirp@0.5.6": {
     "licenses": "MIT",
@@ -3917,25 +3799,11 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\server\\node_modules\\nanoid",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\server\\node_modules\\nanoid\\LICENSE"
   },
-  "napi-build-utils@2.0.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/inspiredware/napi-build-utils",
-    "publisher": "Jim Schlight",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\napi-build-utils",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\napi-build-utils\\LICENSE"
-  },
   "negotiator@0.6.3": {
     "licenses": "MIT",
     "repository": "https://github.com/jshttp/negotiator",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\negotiator",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\negotiator\\LICENSE"
-  },
-  "node-abi@3.96.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/electron/node-abi",
-    "publisher": "Lukas Geiger",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\node-abi",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\node-abi\\LICENSE"
   },
   "node-cron@3.0.3": {
     "licenses": "ISC",
@@ -4198,6 +4066,63 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pathval",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pathval\\LICENSE"
   },
+  "pg-cloudflare@1.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-cloudflare",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-cloudflare\\LICENSE"
+  },
+  "pg-connection-string@2.14.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "publisher": "Blaine Bublitz",
+    "email": "blaine@iceddev.com",
+    "url": "http://iceddev.com/",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-connection-string",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-connection-string\\LICENSE"
+  },
+  "pg-int8@1.0.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/charmander/pg-int8",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-int8",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-int8\\LICENSE"
+  },
+  "pg-pool@3.14.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "publisher": "Brian M. Carlson",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-pool",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-pool\\LICENSE"
+  },
+  "pg-protocol@1.16.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-protocol",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-protocol\\LICENSE"
+  },
+  "pg-types@2.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-pg-types",
+    "publisher": "Brian M. Carlson",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-types",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg-types\\README.md"
+  },
+  "pg@8.23.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/brianc/node-postgres",
+    "publisher": "Brian Carlson",
+    "email": "brian.m.carlson@gmail.com",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pg\\LICENSE"
+  },
+  "pgpass@1.0.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/hoegaarden/pgpass",
+    "publisher": "Hannes Hörl",
+    "email": "hannes.hoerl+pgpass@snowreporter.com",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pgpass",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\pgpass\\README.md"
+  },
   "picocolors@1.1.1": {
     "licenses": "ISC",
     "repository": "https://github.com/alexeyraspopov/picocolors",
@@ -4329,13 +4254,41 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postcss",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postcss\\LICENSE"
   },
-  "prebuild-install@7.1.3": {
+  "postgres-array@2.0.0": {
     "licenses": "MIT",
-    "repository": "https://github.com/prebuild/prebuild-install",
-    "publisher": "Mathias Buus",
-    "url": "@mafintosh",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\prebuild-install",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\prebuild-install\\LICENSE"
+    "repository": "https://github.com/bendrucker/postgres-array",
+    "publisher": "Ben Drucker",
+    "email": "bvdrucker@gmail.com",
+    "url": "bendrucker.me",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postgres-array",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postgres-array\\license"
+  },
+  "postgres-bytea@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bendrucker/postgres-bytea",
+    "publisher": "Ben Drucker",
+    "email": "bvdrucker@gmail.com",
+    "url": "bendrucker.me",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postgres-bytea",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postgres-bytea\\license"
+  },
+  "postgres-date@1.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bendrucker/postgres-date",
+    "publisher": "Ben Drucker",
+    "email": "bvdrucker@gmail.com",
+    "url": "bendrucker.me",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postgres-date",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postgres-date\\license"
+  },
+  "postgres-interval@1.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/bendrucker/postgres-interval",
+    "publisher": "Ben Drucker",
+    "email": "bvdrucker@gmail.com",
+    "url": "bendrucker.me",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postgres-interval",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\postgres-interval\\license"
   },
   "pretty-bytes@5.6.0": {
     "licenses": "MIT",
@@ -4427,7 +4380,8 @@
   "raksha@1.0.0": {
     "licenses": "UNLICENSED",
     "private": true,
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA"
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\LICENSE"
   },
   "range-parser@1.2.1": {
     "licenses": "MIT",
@@ -4446,15 +4400,6 @@
     "url": "http://jongleberry.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\raw-body",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\raw-body\\LICENSE"
-  },
-  "rc@1.2.8": {
-    "licenses": "(BSD-2-Clause OR MIT OR Apache-2.0)",
-    "repository": "https://github.com/dominictarr/rc",
-    "publisher": "Dominic Tarr",
-    "email": "dominic.tarr@gmail.com",
-    "url": "dominictarr.com",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\rc",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\rc\\LICENSE.APACHE2"
   },
   "react-dom@18.3.1": {
     "licenses": "MIT",
@@ -4559,12 +4504,6 @@
     "url": "http://blog.izs.me/",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\read-package-json",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\read-package-json\\LICENSE"
-  },
-  "readable-stream@3.6.2": {
-    "licenses": "MIT",
-    "repository": "https://github.com/nodejs/readable-stream",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bl\\node_modules\\readable-stream",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\bl\\node_modules\\readable-stream\\LICENSE"
   },
   "readable-stream@4.7.0": {
     "licenses": "MIT",
@@ -4792,8 +4731,8 @@
     "licenses": "ISC",
     "repository": "https://github.com/npm/node-semver",
     "publisher": "GitHub Inc.",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\node-abi\\node_modules\\semver",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\node-abi\\node_modules\\semver\\LICENSE"
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\jsonwebtoken\\node_modules\\semver",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\jsonwebtoken\\node_modules\\semver\\LICENSE"
   },
   "send@0.19.2": {
     "licenses": "MIT",
@@ -4946,24 +4885,6 @@
     "email": "ben@npmjs.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\signal-exit",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\signal-exit\\LICENSE.txt"
-  },
-  "simple-concat@1.0.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/feross/simple-concat",
-    "publisher": "Feross Aboukhadijeh",
-    "email": "feross@feross.org",
-    "url": "https://feross.org",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\simple-concat",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\simple-concat\\LICENSE"
-  },
-  "simple-get@4.0.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/feross/simple-get",
-    "publisher": "Feross Aboukhadijeh",
-    "email": "feross@feross.org",
-    "url": "https://feross.org",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\simple-get",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\simple-get\\LICENSE"
   },
   "simple-swizzle@0.2.4": {
     "licenses": "MIT",
@@ -5242,15 +5163,6 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\strip-final-newline",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\strip-final-newline\\license"
   },
-  "strip-json-comments@2.0.1": {
-    "licenses": "MIT",
-    "repository": "https://github.com/sindresorhus/strip-json-comments",
-    "publisher": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "sindresorhus.com",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\rc\\node_modules\\strip-json-comments",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\rc\\node_modules\\strip-json-comments\\license"
-  },
   "strip-json-comments@3.1.1": {
     "licenses": "MIT",
     "repository": "https://github.com/sindresorhus/strip-json-comments",
@@ -5345,21 +5257,6 @@
     "repository": "https://github.com/tailwindlabs/tailwindcss.git#v3",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tailwindcss",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tailwindcss\\LICENSE"
-  },
-  "tar-fs@2.1.5": {
-    "licenses": "MIT",
-    "repository": "https://github.com/mafintosh/tar-fs",
-    "publisher": "Mathias Buus",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tar-fs",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tar-fs\\LICENSE"
-  },
-  "tar-stream@2.2.0": {
-    "licenses": "MIT",
-    "repository": "https://github.com/mafintosh/tar-stream",
-    "publisher": "Mathias Buus",
-    "email": "mathiasbuus@gmail.com",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tar-stream",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tar-stream\\LICENSE"
   },
   "temp-dir@2.0.0": {
     "licenses": "MIT",
@@ -5493,15 +5390,6 @@
     "email": "hiroki.osame@gmail.com",
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tsx",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tsx\\LICENSE"
-  },
-  "tunnel-agent@0.6.0": {
-    "licenses": "Apache-2.0",
-    "repository": "https://github.com/mikeal/tunnel-agent",
-    "publisher": "Mikeal Rogers",
-    "email": "mikeal.rogers@gmail.com",
-    "url": "http://www.futurealoof.com",
-    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tunnel-agent",
-    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\tunnel-agent\\LICENSE"
   },
   "type-detect@4.1.0": {
     "licenses": "MIT",
@@ -5953,6 +5841,14 @@
     "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\xmlhttprequest-ssl",
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\xmlhttprequest-ssl\\LICENSE"
   },
+  "xtend@4.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Raynos/xtend",
+    "publisher": "Raynos",
+    "email": "raynos2@gmail.com",
+    "path": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\xtend",
+    "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\xtend\\LICENSE"
+  },
   "y18n@5.0.8": {
     "licenses": "ISC",
     "repository": "https://github.com/yargs/y18n",
@@ -6009,3 +5905,4 @@
     "licenseFile": "C:\\Users\\haasi\\OneDrive\\Desktop\\RAKSHA\\node_modules\\zustand\\LICENSE"
   }
 }
+

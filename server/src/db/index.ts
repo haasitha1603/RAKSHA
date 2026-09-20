@@ -28,6 +28,7 @@ export function convertSql(sql: string): string {
 
   // Convert positional ? to $1, $2, $3... (ignoring characters in string literals)
   let paramIdx = 1;
+  s = s.replace(/\bdatetime\(([^()]+)\)/gi, '$1');
   return s.replace(/'(?:''|[^'])*'|\?/g, (match) => {
     if (match === '?') {
       return `$${paramIdx++}`;

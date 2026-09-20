@@ -11,16 +11,16 @@ import { emitToRoom } from '../sockets/index.js';
 import { createEmergencyIncident } from '../engine/emergency.js';
 import { sendWebPush } from '../services/push.js';
 
-export function runWatchdogTick(): void {
+export async function runWatchdogTick(): Promise<void> {
   const now = new Date();
   const nowIso = now.toISOString();
   const nowMs = now.getTime();
 
   // 1. SOS Cancellation Window Expiry -> Auto Escalate
-  const pendingSosList = db.prepare(`
+  const pendingSosList = await db.prepare(`
     SELECT * FROM sos_events
     WHERE status = 'pending' AND datetime(cancel_until) <= datetime(?)
-  `).all(nowIso) as Array<{
+  `).all<{
     id: string;
     user_id: string;
     journey_id: string | null;
@@ -29,10 +29,10 @@ export function runWatchdogTick(): void {
     lat: number;
     lng: number;
     acc: number;
-  }>;
+  }>(nowIso);
 
   for (const sos of pendingSosList) {
-    db.prepare(`UPDATE sos_events SET status = 'escalated' WHERE id = ?`).run(sos.id);
+    await db.prepare(`UPDATE sos_events SET status = 'escalated' WHERE id = ?`).run(sos.id);
 
     // Create incident
     createEmergencyIncident({
@@ -49,9 +49,9 @@ export function runWatchdogTick(): void {
   }
 
   // 2. Active Journeys Watchdog: Heartbeat / Connectivity Loss & ETA
-  const activeJourneys = db.prepare(`
+  const activeJourneys = await db.prepare(`
     SELECT * FROM journeys WHERE status = 'active'
-  `).all() as JourneyRow[];
+  `).all<JourneyRow>();
 
   for (const journey of activeJourneys) {
     const profileKey = (journey.timing_profile as TimingProfileKey) || 'production';
@@ -64,7 +64,7 @@ export function runWatchdogTick(): void {
 
       if (elapsed > profile.connectivityLost && journey.online === 1) {
         // Mark offline
-        db.prepare(`UPDATE journeys SET online = 0 WHERE id = ?`).run(journey.id);
+        await db.prepare(`UPDATE journeys SET online = 0 WHERE id = ?`).run(journey.id);
 
         emitToRoom(`journey:${journey.id}`, 'journey:update', {
           journeyId: journey.id,
@@ -76,13 +76,13 @@ export function runWatchdogTick(): void {
     }
 
     // Safety Checks Timeouts -> Escalate
-    const pendingChecks = db.prepare(`
+    const pendingChecks = await db.prepare(`
       SELECT * FROM safety_checks
       WHERE journey_id = ? AND responded_at IS NULL AND datetime(due_at) <= datetime(?)
-    `).all(journey.id, nowIso) as SafetyCheckRow[];
+    `).all<SafetyCheckRow>(journey.id, nowIso);
 
     for (const check of pendingChecks) {
-      db.prepare(`
+      await db.prepare(`
         UPDATE safety_checks SET responded_at = ?, response = NULL WHERE id = ?
       `).run(nowIso, check.id);
 
@@ -102,13 +102,13 @@ export function runWatchdogTick(): void {
   }
 
   // 3. Guardian Acknowledgment Timeout on Incidents
-  const unacknowledgedIncidents = db.prepare(`
+  const unacknowledgedIncidents = await db.prepare(`
     SELECT * FROM incidents
     WHERE status = 'open' AND guardian_ack_deadline IS NOT NULL AND datetime(guardian_ack_deadline) <= datetime(?)
-  `).all(nowIso) as IncidentRow[];
+  `).all<IncidentRow>(nowIso);
 
   for (const inc of unacknowledgedIncidents) {
-    db.prepare(`
+    await db.prepare(`
       UPDATE incidents SET guardian_ack_deadline = NULL WHERE id = ?
     `).run(inc.id);
 
@@ -121,13 +121,13 @@ export function runWatchdogTick(): void {
   }
 
   // 4. Scheduled Fake Calls Scheduler
-  const dueFakeCalls = db.prepare(`
+  const dueFakeCalls = await db.prepare(`
     SELECT * FROM fake_calls
     WHERE status = 'armed' AND datetime(scheduled_for) <= datetime(?)
-  `).all(nowIso) as FakeCallRow[];
+  `).all<FakeCallRow>(nowIso);
 
   for (const fc of dueFakeCalls) {
-    db.prepare(`UPDATE fake_calls SET status = 'ringing' WHERE id = ?`).run(fc.id);
+    await db.prepare(`UPDATE fake_calls SET status = 'ringing' WHERE id = ?`).run(fc.id);
 
     // Broadcast trigger over socket
     emitToRoom(`user:${fc.user_id}`, 'fake-call:incoming', {

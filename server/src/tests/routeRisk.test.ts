@@ -4,8 +4,8 @@ import { RawRouteResult } from '../services/routing.js';
 import { runMigrations } from '../db/migrations.js';
 
 describe('Route Safety Scoring & Ranking', () => {
-  beforeAll(() => {
-    runMigrations();
+  beforeAll(async () => {
+    await runMigrations();
   });
   it('calculates night factor properly based on hour', () => {
     const night = new Date('2026-09-20T23:30:00');
@@ -18,7 +18,7 @@ describe('Route Safety Scoring & Ranking', () => {
     expect(calculateNightFactor(afternoon)).toBe(0.1);
   });
 
-  it('ranks safer routes higher when safety priority slider is high', () => {
+  it('ranks safer routes higher when safety priority slider is high', async () => {
     // Two routes:
     // Route A: Fast but risky (passes through dense coordinates)
     // Route B: Longer but safe
@@ -42,7 +42,7 @@ describe('Route Safety Scoring & Ranking', () => {
       durationS: 900, // 15 min
     };
 
-    const evaluated = scoreAndRankRoutes([routeFast, routeSafe], new Date('2026-09-20T23:00:00'), 90);
+    const evaluated = await scoreAndRankRoutes([routeFast, routeSafe], new Date('2026-09-20T23:00:00'), 90);
     expect(evaluated.length).toBe(2);
     expect(evaluated[0].safetyScore).toBeGreaterThanOrEqual(0);
     expect(evaluated[0].safetyScore).toBeLessThanOrEqual(100);

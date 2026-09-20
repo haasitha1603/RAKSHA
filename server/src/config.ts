@@ -52,7 +52,7 @@ const configSchema = z.object({
   JWT_SECRET: z.string().min(16).default('development-secret-key-32-chars-long!'),
   COOKIE_SECURE: z.coerce.boolean().default(false),
   DATABASE_URL: z.string().default('postgresql://postgres:1603@localhost:5432/raksha'),
-  DB_PATH: z.string().default('./data/raksha.db'),
+  DB_PATH: z.string().optional(),
   DEMO_CENTER_LAT: z.coerce.number().default(28.6139),
   DEMO_CENTER_LNG: z.coerce.number().default(77.2090),
   DEMO_RESPONDER_KEY: z.string().default('raksha-demo'),

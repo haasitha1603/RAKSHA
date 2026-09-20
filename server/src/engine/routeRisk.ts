@@ -155,21 +155,23 @@ export function evaluatePointRisk(
   };
 }
 
-export function scoreAndRankRoutes(
+export async function scoreAndRankRoutes(
   rawRoutes: RawRouteResult[],
   departAtDate: Date = new Date(),
   safetyPriority = 60
-): RouteOption[] {
+): Promise<RouteOption[]> {
   if (rawRoutes.length === 0) return [];
 
   const nightFactor = calculateNightFactor(departAtDate);
 
   // Pull candidate safety layers once for bounding area
-  const allRiskZones = db.prepare(`SELECT * FROM risk_zones`).all() as RiskZoneRow[];
-  const allLightingZones = db.prepare(`SELECT * FROM lighting_zones`).all() as LightingZoneRow[];
-  const allActivityZones = db.prepare(`SELECT * FROM activity_zones`).all() as ActivityZoneRow[];
-  const allReports = db.prepare(`SELECT * FROM reports WHERE status != 'expired' AND status != 'removed'`).all() as ReportRow[];
-  const allFacilities = db.prepare(`SELECT * FROM facilities`).all() as FacilityRow[];
+  const [allRiskZones, allLightingZones, allActivityZones, allReports, allFacilities] = await Promise.all([
+    db.prepare(`SELECT * FROM risk_zones`).all<RiskZoneRow>(),
+    db.prepare(`SELECT * FROM lighting_zones`).all<LightingZoneRow>(),
+    db.prepare(`SELECT * FROM activity_zones`).all<ActivityZoneRow>(),
+    db.prepare(`SELECT * FROM reports WHERE status != 'expired' AND status != 'removed'`).all<ReportRow>(),
+    db.prepare(`SELECT * FROM facilities`).all<FacilityRow>(),
+  ]);
 
   interface EvaluatedCandidate {
     raw: RawRouteResult;

@@ -22,10 +22,10 @@ describe('Server API Endpoints & Emergency Bridge', () => {
   let sessionCookie: string;
   let testUserId: string;
 
-  beforeAll(() => {
-    runMigrations();
+  beforeAll(async () => {
+    await runMigrations();
     // Seed test facilities for dispatch test
-    db.prepare(`
+    await db.prepare(`
       INSERT OR IGNORE INTO facilities (id, type, name, lat, lng, phone, is_24x7, is_demo, source)
       VALUES 
         ('test_ps_1', 'police', 'Test Police Station', 28.6140, 77.2091, '112', 1, 1, 'test'),
@@ -114,12 +114,12 @@ describe('Server API Endpoints & Emergency Bridge', () => {
 
     expect(incidentId).toMatch(/^inc_/);
 
-    const incident = db.prepare(`SELECT * FROM incidents WHERE id = ?`).get(incidentId) as any;
+    const incident = await db.prepare(`SELECT * FROM incidents WHERE id = ?`).get(incidentId) as any;
     expect(incident).toBeDefined();
     expect(incident.level).toBe(3);
 
     // Verify parallel notifications were created
-    const notifs = db.prepare(`SELECT * FROM notifications WHERE incident_id = ?`).all(incidentId);
+    const notifs = await db.prepare(`SELECT * FROM notifications WHERE incident_id = ?`).all(incidentId);
     expect(notifs.length).toBeGreaterThanOrEqual(2); // At least police and hospital
   });
 
@@ -148,11 +148,11 @@ describe('Server API Endpoints & Emergency Bridge', () => {
     expect(cancelRes.body.status).toBe('cancelled');
 
     // But in DB, status is 'duress_escalated'
-    const sosRow = db.prepare(`SELECT * FROM sos_events WHERE id = ?`).get(sosId) as any;
+    const sosRow = await db.prepare(`SELECT * FROM sos_events WHERE id = ?`).get(sosId) as any;
     expect(sosRow.status).toBe('duress_escalated');
 
     // And an emergency incident with duress=1 exists
-    const duressIncident = db.prepare(`SELECT * FROM incidents WHERE sos_id = ?`).get(sosId) as any;
+    const duressIncident = await db.prepare(`SELECT * FROM incidents WHERE sos_id = ?`).get(sosId) as any;
     expect(duressIncident).toBeDefined();
     expect(duressIncident.duress).toBe(1);
   });

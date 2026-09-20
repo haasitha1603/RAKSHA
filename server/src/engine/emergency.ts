@@ -28,17 +28,17 @@ export interface CreateIncidentParams {
   acc?: number;
 }
 
-export function findNearestFacility(
+export async function findNearestFacility(
   type: 'police' | 'hospital',
   lat: number,
   lng: number
-): { facility: FacilityRow; distanceKm: number } | null {
+): Promise<{ facility: FacilityRow; distanceKm: number } | null> {
   const radiuses = [3000, 10000, 25000]; // 3km -> 10km -> 25km
 
   for (const r of radiuses) {
-    const facilities = db.prepare(`
+    const facilities = await db.prepare(`
       SELECT * FROM facilities WHERE type = ?
-    `).all(type) as FacilityRow[];
+    `).all<FacilityRow>(type);
 
     const withDist = facilities
       .map((f) => ({
@@ -63,9 +63,12 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   const incidentId = `inc_${nanoid(10)}`;
   const nowIso = new Date().toISOString();
 
-  const user = db.prepare(`SELECT * FROM users WHERE id = ?`).get(params.userId) as UserRow;
+  const user = await db.prepare(`SELECT * FROM users WHERE id = ?`).get<UserRow>(params.userId);
+  if (!user) {
+    throw new Error(`User ${params.userId} not found`);
+  }
   const journey = params.journeyId
-    ? (db.prepare(`SELECT * FROM journeys WHERE id = ?`).get(params.journeyId) as JourneyRow | undefined)
+    ? await db.prepare(`SELECT * FROM journeys WHERE id = ?`).get<JourneyRow>(params.journeyId)
     : undefined;
 
   const profileKey = ((journey?.timing_profile as TimingProfileKey) || 'demo');
@@ -73,8 +76,8 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   const ackDeadline = new Date(Date.now() + profile.guardianAckTimeout).toISOString();
 
   // 1. Facilities lookup
-  const nearestPolice = findNearestFacility('police', params.lat, params.lng);
-  const nearestHospital = findNearestFacility('hospital', params.lat, params.lng);
+  const nearestPolice = await findNearestFacility('police', params.lat, params.lng);
+  const nearestHospital = await findNearestFacility('hospital', params.lat, params.lng);
 
   // 2. Guardians lookup
   let guardians: GuardianRow[] = [];
@@ -83,18 +86,18 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
       const gIds: string[] = JSON.parse(journey.guardian_ids_json);
       if (gIds.length > 0) {
         const placeholders = gIds.map(() => '?').join(',');
-        guardians = db.prepare(`
+        guardians = await db.prepare(`
           SELECT * FROM guardians WHERE id IN (${placeholders}) AND status = 'accepted'
-        `).all(...gIds) as GuardianRow[];
+        `).all<GuardianRow>(...gIds);
       }
     } catch {}
   }
 
   // Fallback to all accepted user guardians if none bound to journey
   if (guardians.length === 0) {
-    guardians = db.prepare(`
+    guardians = await db.prepare(`
       SELECT * FROM guardians WHERE user_id = ? AND status = 'accepted'
-    `).all(params.userId) as GuardianRow[];
+    `).all<GuardianRow>(params.userId);
   }
 
   // 3. Last 5 points & speed
@@ -103,10 +106,10 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   let headingDeg = 0;
 
   if (params.journeyId) {
-    const pts = db.prepare(`
+    const pts = await db.prepare(`
       SELECT lat, lng, ts, speed, heading FROM journey_points
       WHERE journey_id = ? ORDER BY id DESC LIMIT 5
-    `).all(params.journeyId) as JourneyPointRow[];
+    `).all<JourneyPointRow>(params.journeyId);
 
     if (pts.length > 0) {
       speedMps = pts[0].speed || 0;
@@ -190,7 +193,7 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   };
 
   // 5. Insert Incident
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO incidents (
       id, user_id, journey_id, sos_id, level, status,
       trigger, duress, created_at, packet_json, guardian_ack_deadline
@@ -209,7 +212,7 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
 
   // Update journey status if active
   if (params.journeyId) {
-    db.prepare(`
+    await db.prepare(`
       UPDATE journeys SET status = 'emergency', level = 3, risk_score = 100 WHERE id = ?
     `).run(params.journeyId);
   }
@@ -220,7 +223,7 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   // Police notification
   if (nearestPolice) {
     const notifId = `notif_pol_${nanoid(8)}`;
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO notifications (id, incident_id, recipient_type, recipient_id, channel, status, queued_at, sent_at, meta_json)
       VALUES (?, ?, 'police', ?, 'socket', 'sent', ?, ?, ?)
     `).run(
@@ -250,7 +253,7 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   // Hospital notification
   if (nearestHospital) {
     const notifId = `notif_hosp_${nanoid(8)}`;
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO notifications (id, incident_id, recipient_type, recipient_id, channel, status, queued_at, sent_at, meta_json)
       VALUES (?, ?, 'hospital', ?, 'socket', 'sent', ?, ?, ?)
     `).run(
@@ -280,7 +283,7 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   // Guardian notifications (Parallel)
   for (const guardian of guardians) {
     const notifId = `notif_g_${nanoid(8)}`;
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO notifications (id, incident_id, recipient_type, recipient_id, channel, status, queued_at, sent_at, meta_json)
       VALUES (?, ?, 'guardian', ?, 'sms_mock', 'sent', ?, ?, ?)
     `).run(notifId, incidentId, guardian.id, nowIso, nowIso, JSON.stringify({ phone: guardian.phone }));
@@ -330,7 +333,7 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   };
 
   if (params.journeyId) {
-    db.prepare(`
+    await db.prepare(`
       INSERT INTO journey_events (id, journey_id, ts, type, payload_json)
       VALUES (?, ?, ?, 'emergency_sos', ?)
     `).run(eventId, params.journeyId, nowIso, JSON.stringify(eventPayload));
@@ -355,27 +358,27 @@ export async function createEmergencyIncident(params: CreateIncidentParams): Pro
   return incidentId;
 }
 
-export function acknowledgeIncident(
+export async function acknowledgeIncident(
   incidentId: string,
   recipientType: 'police' | 'hospital' | 'guardian',
   recipientId: string
-): void {
+ ): Promise<void> {
   const nowIso = new Date().toISOString();
 
-  db.prepare(`
+  await db.prepare(`
     UPDATE notifications
     SET status = 'acknowledged', acknowledged_at = ?
     WHERE incident_id = ? AND recipient_type = ? AND (recipient_id = ? OR recipient_type IN ('police', 'hospital'))
   `).run(nowIso, incidentId, recipientType, recipientId);
 
-  db.prepare(`
+  await db.prepare(`
     UPDATE incidents SET status = 'acknowledged' WHERE id = ? AND status = 'open'
   `).run(incidentId);
 
-  const incident = db.prepare(`SELECT * FROM incidents WHERE id = ?`).get(incidentId) as any;
+  const incident = await db.prepare(`SELECT * FROM incidents WHERE id = ?`).get(incidentId) as any;
   if (!incident) return;
 
-  const notifs = db.prepare(`SELECT * FROM notifications WHERE incident_id = ?`).all(incidentId);
+  const notifs = await db.prepare(`SELECT * FROM notifications WHERE incident_id = ?`).all(incidentId);
 
   emitToRoom(`incident:${incidentId}`, 'incident:update', {
     incidentId,

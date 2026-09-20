@@ -50,11 +50,11 @@ describe('Retention, Export & Cascade Delete', () => {
     expect(deleteRes.body.success).toBe(true);
 
     // Verify user is gone
-    const checkUser = db.prepare(`SELECT * FROM users WHERE id = ?`).get(userId);
+    const checkUser = await db.prepare(`SELECT * FROM users WHERE id = ?`).get(userId);
     expect(checkUser).toBeUndefined();
 
     // Verify consents cascaded
-    const checkConsents = db.prepare(`SELECT * FROM consents WHERE user_id = ?`).all(userId);
+    const checkConsents = await db.prepare(`SELECT * FROM consents WHERE user_id = ?`).all(userId);
     expect(checkConsents.length).toBe(0);
   });
 });

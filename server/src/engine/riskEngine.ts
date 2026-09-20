@@ -52,13 +52,13 @@ export function filterPositions(positions: PositionBatchItem[]): PositionBatchIt
   return speedFiltered;
 }
 
-export function evaluateJourneyRisk(
+export async function evaluateJourneyRisk(
   journey: JourneyRow,
   currentPoint: PositionBatchItem,
   allRecentPoints: JourneyPointRow[],
   activeCheckMissed = false,
   guardianCheckMissed = false
-): JourneyRiskEvaluation {
+): Promise<JourneyRiskEvaluation> {
   const profileKey = (journey.timing_profile as TimingProfileKey) || 'production';
   const profile = TIMING_PROFILES[profileKey] || TIMING_PROFILES.production;
 
@@ -114,19 +114,19 @@ export function evaluateJourneyRisk(
 
   // Check if near a planned stop
   const nowTs = new Date(currentPoint.ts).getTime();
-  const plannedStops = db.prepare(`
+  const plannedStops = await db.prepare(`
     SELECT * FROM planned_stops
     WHERE journey_id = ? AND datetime(until_ts) >= datetime(?)
-  `).all(journey.id, currentPoint.ts) as Array<{ lat: number; lng: number; radius_m: number }>;
+  `).all<{ lat: number; lng: number; radius_m: number }>(journey.id, currentPoint.ts);
 
   const inPlannedStop = plannedStops.some(
     (ps) => haversineDistance(currentPoint.lat, currentPoint.lng, ps.lat, ps.lng) <= ps.radius_m
   );
 
   // Check if near safe place (< 100m)
-  const safePlaces = db.prepare(`
+  const safePlaces = await db.prepare(`
     SELECT * FROM facilities WHERE type = 'safe_place'
-  `).all() as FacilityRow[];
+  `).all<FacilityRow>();
   const nearSafePlace = safePlaces.some(
     (sp) => haversineDistance(currentPoint.lat, currentPoint.lng, sp.lat, sp.lng) <= 100
   );
@@ -195,11 +195,11 @@ export function evaluateJourneyRisk(
 
   // 4. Area Risk
   const nightFactor = calculateNightFactor(new Date(currentPoint.ts));
-  const riskZones = db.prepare(`SELECT * FROM risk_zones`).all() as any[];
-  const lightingZones = db.prepare(`SELECT * FROM lighting_zones`).all() as any[];
-  const activityZones = db.prepare(`SELECT * FROM activity_zones`).all() as any[];
-  const reports = db.prepare(`SELECT * FROM reports WHERE status != 'expired' AND status != 'removed'`).all() as any[];
-  const facilities = db.prepare(`SELECT * FROM facilities`).all() as any[];
+  const riskZones = await db.prepare(`SELECT * FROM risk_zones`).all();
+  const lightingZones = await db.prepare(`SELECT * FROM lighting_zones`).all();
+  const activityZones = await db.prepare(`SELECT * FROM activity_zones`).all();
+  const reports = await db.prepare(`SELECT * FROM reports WHERE status != 'expired' AND status != 'removed'`).all();
+  const facilities = await db.prepare(`SELECT * FROM facilities`).all();
 
   const pointDetail = evaluatePointRisk(
     { lat: currentPoint.lat, lng: currentPoint.lng },

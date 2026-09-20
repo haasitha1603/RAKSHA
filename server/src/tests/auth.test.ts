@@ -5,8 +5,8 @@ import { runMigrations } from '../db/migrations.js';
 import { db } from '../db/index.js';
 
 describe('Auth & Session Security Tests', () => {
-  beforeAll(() => {
-    runMigrations();
+  beforeAll(async () => {
+    await runMigrations();
   });
 
   const testUser = {

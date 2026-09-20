@@ -41,7 +41,7 @@ mapsRouter.post('/routes/plan', validateBody(planRouteSchema), async (req: Reque
   );
 
   const departDate = departAt ? new Date(departAt) : new Date();
-  const scoredRoutes = scoreAndRankRoutes(rawRoutes, departDate, safetyPriority);
+  const scoredRoutes = await scoreAndRankRoutes(rawRoutes, departDate, safetyPriority);
 
   res.json({ routes: scoredRoutes });
 });
@@ -61,13 +61,15 @@ mapsRouter.get('/facilities/nearby', async (req: Request, res: Response) => {
   res.json({ facilities });
 });
 
-mapsRouter.get('/safety/layers', (req: Request, res: Response) => {
+mapsRouter.get('/safety/layers', async (_req: Request, res: Response) => {
   // Query incident zones, lighting zones, activity zones, and verified reports
-  const riskZones = db.prepare(`SELECT * FROM risk_zones`).all();
-  const lightingZones = db.prepare(`SELECT * FROM lighting_zones`).all();
-  const activityZones = db.prepare(`SELECT * FROM activity_zones`).all();
-  const reports = db.prepare(`SELECT * FROM reports WHERE status != 'expired' AND status != 'removed'`).all();
-  const facilities = db.prepare(`SELECT * FROM facilities`).all();
+  const [riskZones, lightingZones, activityZones, reports, facilities] = await Promise.all([
+    db.prepare(`SELECT * FROM risk_zones`).all(),
+    db.prepare(`SELECT * FROM lighting_zones`).all(),
+    db.prepare(`SELECT * FROM activity_zones`).all(),
+    db.prepare(`SELECT * FROM reports WHERE status != 'expired' AND status != 'removed'`).all(),
+    db.prepare(`SELECT * FROM facilities`).all(),
+  ]);
 
   res.json({
     riskZones,
@@ -92,22 +94,24 @@ mapsRouter.get('/safety/point', async (req: Request, res: Response) => {
   const openFacilities = facilities.filter(f => f.is_24x7);
 
   // Lighting zones near point
-  const lightingZones = db.prepare(`
+  const lightingZones = await db.prepare(`
     SELECT level, (
       (lat - ?) * (lat - ?) + (lng - ?) * (lng - ?)
     ) as dist_sq FROM lighting_zones ORDER BY dist_sq ASC LIMIT 3
-  `).all(lat, lat, lng, lng) as { level: number; dist_sq: number }[];
+  `).all<{ level: number; dist_sq: number }>(lat, lat, lng, lng);
 
   const avgLighting = lightingZones.length > 0
     ? lightingZones.reduce((acc, z) => acc + z.level, 0) / lightingZones.length
     : 0.6;
 
   // Nearby risk zones
-  const nearbyRisks = db.prepare(`
+  const nearbyRisks = await db.prepare(`
     SELECT category, severity, (
       (lat - ?) * (lat - ?) + (lng - ?) * (lng - ?)
-    ) as dist_sq FROM risk_zones WHERE dist_sq < 0.0001 ORDER BY severity DESC LIMIT 2
-  `).all(lat, lat, lng, lng) as { category: string; severity: number }[];
+    ) as dist_sq FROM risk_zones
+    WHERE ((lat - ?) * (lat - ?) + (lng - ?) * (lng - ?)) < 0.0001
+    ORDER BY severity DESC LIMIT 2
+  `).all<{ category: string; severity: number }>(lat, lat, lng, lng, lat, lat, lng, lng);
 
   // Calculate score
   let score = 80;
