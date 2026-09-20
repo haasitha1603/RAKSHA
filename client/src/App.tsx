@@ -14,8 +14,10 @@ import { useSettingsStore } from './stores/settingsStore.js';
 // Layout & Common
 import { SkipLink } from './components/common/SkipLink.js';
 import { OfflineBanner } from './components/common/OfflineBanner.js';
-import { Navbar } from './components/layout/Navbar.js';
-import { BottomNav } from './components/layout/BottomNav.js';
+import { AppLayout } from './components/layout/AppLayout.js';
+import { PublicLayout } from './components/layout/PublicLayout.js';
+import { GuardianLayout } from './components/layout/GuardianLayout.js';
+import { ResponderLayout } from './components/layout/ResponderLayout.js';
 
 // Pages
 import { SignupPage } from './pages/auth/SignupPage.js';
@@ -82,19 +84,6 @@ const RootRedirect: React.FC = () => {
   return user ? <Navigate to="/app" replace /> : <Navigate to="/login" replace />;
 };
 
-// Main App Layout with Navbar & BottomNav
-const AppLayout: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-bg text-text flex flex-col justify-between">
-      <Navbar />
-      <main id="main-content" className="flex-1">
-        <Outlet />
-      </main>
-      <BottomNav />
-    </div>
-  );
-};
-
 export const App: React.FC = () => {
   const checkSession = useAuthStore((s) => s.checkSession);
   const { theme, textSize, highContrast } = useSettingsStore();
@@ -145,32 +134,37 @@ export const App: React.FC = () => {
           {/* Root Entry: Operational Redirect */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* Legal & Info */}
-          <Route path="/legal/privacy" element={<PrivacyPage />} />
-          <Route path="/legal/terms" element={<TermsPage />} />
-          <Route path="/legal/cookies" element={<CookiesPage />} />
-          <Route path="/legal/third-parties" element={<ThirdPartiesPage />} />
-          <Route path="/legal/licenses" element={<LicensesPage />} />
-          <Route path="/legal/contact" element={<ContactPage />} />
+          {/* Public Routes (Public Layout with clean header & footer) */}
+          <Route element={<PublicLayout />}>
+            <Route path="/legal/privacy" element={<PrivacyPage />} />
+            <Route path="/legal/terms" element={<TermsPage />} />
+            <Route path="/legal/cookies" element={<CookiesPage />} />
+            <Route path="/legal/third-parties" element={<ThirdPartiesPage />} />
+            <Route path="/legal/licenses" element={<LicensesPage />} />
+            <Route path="/legal/contact" element={<ContactPage />} />
 
-          {/* Authentication */}
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/onboarding" element={<OnboardingWizard />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/onboarding" element={<OnboardingWizard />} />
+          </Route>
 
-          {/* Redirects */}
+          {/* Direct Redirects */}
           <Route path="/demo" element={<Navigate to="/app/drills" replace />} />
           <Route path="/what-if" element={<Navigate to="/app/help" replace />} />
           <Route path="/demo/what-if" element={<Navigate to="/app/help" replace />} />
 
           {/* Public Guardian Tracking Stream */}
-          <Route path="/g/:token" element={<GuardianViewPage />} />
+          <Route element={<GuardianLayout />}>
+            <Route path="/g/:token" element={<GuardianViewPage />} />
+          </Route>
 
           {/* Simulated Responder Console */}
-          <Route path="/responder" element={<ResponderLoginPage />} />
-          <Route path="/responder/:facilityId" element={<ResponderConsolePage />} />
+          <Route element={<ResponderLayout />}>
+            <Route path="/responder" element={<ResponderLoginPage />} />
+            <Route path="/responder/:facilityId" element={<ResponderConsolePage />} />
+          </Route>
 
-          {/* Protected User Routes (Standard App Layout) */}
+          {/* Protected User Routes (Standard App Layout with 272px Sidebar, single topbar, single scroll) */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/app" element={<HomePage />} />
@@ -185,7 +179,7 @@ export const App: React.FC = () => {
               <Route path="/app/drills" element={<DrillsPage />} />
             </Route>
 
-            {/* Immersive Fullscreen Pages (No standard bottom nav) */}
+            {/* Immersive Fullscreen Pages (No standard bottom nav or sidebar) */}
             <Route path="/app/sos" element={<SosPage />} />
             <Route path="/app/fake-call/standby/:id" element={<FakeCallStandbyPage />} />
             <Route path="/app/fake-call/incoming/:id" element={<FakeCallIncomingPage />} />

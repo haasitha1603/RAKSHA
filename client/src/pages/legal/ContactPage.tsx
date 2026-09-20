@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { Navbar } from '../../components/layout/Navbar.js';
-import { Footer } from '../../components/layout/Footer.js';
 
 export const ContactPage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -21,10 +19,7 @@ export const ContactPage: React.FC = () => {
         <title>Contact &amp; Support — Raksha</title>
       </Helmet>
 
-      <div className="min-h-screen bg-bg text-text flex flex-col justify-between">
-        <Navbar />
-
-        <main className="max-w-3xl mx-auto px-4 py-10 space-y-8 flex-1 w-full">
+      <div className="max-w-3xl mx-auto px-4 py-10 space-y-8 w-full">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-soft text-primary font-bold text-xs rounded-full">
               <Mail className="w-3.5 h-3.5" />
@@ -120,9 +115,6 @@ export const ContactPage: React.FC = () => {
               </form>
             )}
           </div>
-        </main>
-
-        <Footer />
       </div>
     </>
   );

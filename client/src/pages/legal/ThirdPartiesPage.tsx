@@ -1,8 +1,6 @@
 import React from 'react';
 import { ExternalLink, Database, Globe } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { Navbar } from '../../components/layout/Navbar.js';
-import { Footer } from '../../components/layout/Footer.js';
 
 export const ThirdPartiesPage: React.FC = () => {
   const providers = [
@@ -32,10 +30,7 @@ export const ThirdPartiesPage: React.FC = () => {
         <title>Third-Party Services &amp; Subprocessors — Raksha</title>
       </Helmet>
 
-      <div className="min-h-screen bg-bg text-text flex flex-col justify-between">
-        <Navbar />
-
-        <main className="max-w-3xl mx-auto px-4 py-10 space-y-8 flex-1">
+      <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-soft text-primary font-bold text-xs rounded-full">
               <Globe className="w-3.5 h-3.5" />
@@ -81,9 +76,6 @@ export const ThirdPartiesPage: React.FC = () => {
             <strong className="block text-text mb-1">Zero Advertising Partners</strong>
             Raksha does not partner with, sell telemetry to, or transmit user data to ad brokers, analytics corporations, or data aggregators.
           </div>
-        </main>
-
-        <Footer />
       </div>
     </>
   );

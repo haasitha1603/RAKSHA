@@ -20,7 +20,6 @@ import {
 import { SafetyMap } from '../../components/map/SafetyMap.js';
 import { SpotlightCard } from '../../components/ui/SpotlightCard.js';
 import { HoldButton } from '../../components/ui/HoldButton.js';
-import { SimulationNotice } from '../../components/common/SimulationNotice.js';
 import { useJourneyStore } from '../../stores/journeyStore.js';
 import { useAuthStore } from '../../stores/authStore.js';
 import { useSosStore } from '../../stores/sosStore.js';
@@ -63,6 +62,7 @@ export const HomePage: React.FC = () => {
   // 1. Greeting & status states
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [geoPermission, setGeoPermission] = useState<'granted' | 'denied' | 'prompt' | 'unknown'>('unknown');
 
   // 2. Search & Recents states
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,10 +159,22 @@ export const HomePage: React.FC = () => {
       })
       .catch(() => {});
 
+    // Check geolocation permission query
+    if ('permissions' in navigator) {
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((status) => {
+          setGeoPermission(status.state as any);
+          status.onchange = () => setGeoPermission(status.state as any);
+        })
+        .catch(() => {});
+    }
+
     // Request GPS location
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          setGeoPermission('granted');
           const loc = {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
@@ -179,6 +191,7 @@ export const HomePage: React.FC = () => {
             .catch(() => {});
         },
         () => {
+          setGeoPermission('denied');
           // Fallback to Delhi default
           const fallback = {
             lat: 28.6139,
@@ -272,6 +285,17 @@ export const HomePage: React.FC = () => {
     return 'Good evening';
   };
 
+  const getStatusSubtitle = () => {
+    const readyGuardians = guardians.filter((g) => g.status === 'accepted').length;
+    if (geoPermission === 'denied') {
+      return 'Location is off — turn it on to start a journey';
+    }
+    if (guardians.length === 0 || readyGuardians === 0) {
+      return 'No guardian added yet — add one before you travel';
+    }
+    return `Location is on · ${readyGuardians} guardian${readyGuardians > 1 ? 's' : ''} ready`;
+  };
+
   const userCoords: [number, number] = currentLocation
     ? [currentLocation.lat, currentLocation.lng]
     : [28.6139, 77.2090];
@@ -322,16 +346,14 @@ export const HomePage: React.FC = () => {
       </Helmet>
 
       <div className="space-y-4 max-w-5xl mx-auto px-3 sm:px-6 pb-24 md:pb-12 pt-3">
-        <SimulationNotice />
-
         {/* 1. GREETING HEADER */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-surface border border-border p-4 rounded-2xl shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-surface border border-border p-4 rounded-2xl shadow-sm min-w-0 [overflow-wrap:anywhere]">
           <div>
             <h1 className="font-heading font-extrabold text-xl sm:text-2xl text-text">
               {getGreeting()}, {user?.displayName || 'Traveller'}
             </h1>
             <p className="text-xs text-text-muted mt-0.5">
-              Your route safety and active emergency bridge are online.
+              {getStatusSubtitle()}
             </p>
           </div>
 
@@ -360,7 +382,7 @@ export const HomePage: React.FC = () => {
 
         {/* 8. NEXT SCHEDULED FAKE CALL CHIP (if scheduled) */}
         {nextFakeCall && (
-          <div className="p-3 bg-primary-soft/80 border border-primary/30 rounded-xl flex items-center justify-between gap-3 shadow-sm animate-pulse">
+          <div className="p-3 bg-primary-soft/80 border border-primary/30 rounded-xl flex items-center justify-between gap-3 shadow-sm animate-pulse min-w-0 [overflow-wrap:anywhere]">
             <div className="flex items-center gap-2.5 text-xs text-text">
               <Clock className="w-4 h-4 text-primary shrink-0" />
               <span>
@@ -379,7 +401,7 @@ export const HomePage: React.FC = () => {
 
         {/* 6. ACTIVE JOURNEY CARD (only when journey active) */}
         {activeJourney && (
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-primary to-[#8B5CF6] text-white shadow-lg space-y-3">
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-primary to-[#8B5CF6] text-white shadow-lg space-y-3 min-w-0 [overflow-wrap:anywhere]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-ping" />
@@ -422,7 +444,7 @@ export const HomePage: React.FC = () => {
         )}
 
         {/* 2. "WHERE TO?" SEARCH INPUT & RECENTS */}
-        <div className="bg-surface border border-border p-4 rounded-2xl shadow-sm space-y-3">
+        <div className="bg-surface border border-border p-4 rounded-2xl shadow-sm space-y-3 min-w-0 [overflow-wrap:anywhere]">
           <div className="relative">
             <Search className="w-4 h-4 text-text-muted absolute left-3.5 top-3.5" />
             <input
@@ -476,11 +498,11 @@ export const HomePage: React.FC = () => {
           )}
         </div>
 
-        {/* 3. LIVE MAP (Leaflet, ~45% screen height) & 4. AREA SAFETY CHIP */}
+        {/* 3. LIVE MAP (Leaflet, clamped 260px to 520px) & 4. AREA SAFETY CHIP */}
         <div className="space-y-2">
           {/* Area Safety Summary Chip */}
           {safetyPoint && (
-            <div className="flex items-center justify-between p-3 bg-surface border border-border rounded-xl text-xs shadow-sm">
+            <div className="flex items-center justify-between p-3 bg-surface border border-border rounded-xl text-xs shadow-sm min-w-0 [overflow-wrap:anywhere]">
               <div className="flex items-center gap-2">
                 <span
                   className={`w-2.5 h-2.5 rounded-full ${
@@ -505,7 +527,10 @@ export const HomePage: React.FC = () => {
             </div>
           )}
 
-          <div className="relative bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
+          <div
+            className="relative bg-surface border border-border rounded-2xl overflow-hidden shadow-sm min-w-0 [overflow-wrap:anywhere]"
+            style={{ height: 'clamp(260px, 42dvh, 520px)' }}
+          >
             <SafetyMap
               center={userCoords}
               zoom={14}
@@ -513,7 +538,7 @@ export const HomePage: React.FC = () => {
               riskZones={layersData.riskZones}
               reports={layersData.reports}
               facilities={layersData.facilities}
-              className="w-full h-[45vh]"
+              className="w-full h-full"
             />
 
             {/* Bottom-right corner safety score badge */}
@@ -533,7 +558,7 @@ export const HomePage: React.FC = () => {
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
           <SpotlightCard
             onClick={() => navigate('/app/plan')}
-            className="cursor-pointer flex flex-col justify-between h-32 group"
+            className="cursor-pointer flex flex-col justify-between h-32 group min-w-0 [overflow-wrap:anywhere]"
           >
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
               <Navigation className="w-5 h-5" />
@@ -546,7 +571,7 @@ export const HomePage: React.FC = () => {
 
           <SpotlightCard
             onClick={handleQuickFakeCall}
-            className="cursor-pointer flex flex-col justify-between h-32 group"
+            className="cursor-pointer flex flex-col justify-between h-32 group min-w-0 [overflow-wrap:anywhere]"
           >
             <div className="w-10 h-10 rounded-xl bg-[#B727F5]/10 text-[#B727F5] flex items-center justify-center group-hover:scale-105 transition-transform">
               <PhoneCall className="w-5 h-5" />
@@ -559,7 +584,7 @@ export const HomePage: React.FC = () => {
 
           <SpotlightCard
             onClick={() => navigate('/app/reports')}
-            className="cursor-pointer flex flex-col justify-between h-32 group"
+            className="cursor-pointer flex flex-col justify-between h-32 group min-w-0 [overflow-wrap:anywhere]"
           >
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
               <AlertTriangle className="w-5 h-5" />
@@ -576,12 +601,12 @@ export const HomePage: React.FC = () => {
             holdDurationMs={3000}
             label="EMERGENCY SOS"
             sublabel="HOLD 3s"
-            className="h-32"
+            className="h-32 min-w-0 [overflow-wrap:anywhere]"
           />
         </div>
 
         {/* 7. GUARDIANS STRIP */}
-        <div className="bg-surface border border-border p-4 rounded-2xl shadow-sm space-y-3">
+        <div className="bg-surface border border-border p-4 rounded-2xl shadow-sm space-y-3 min-w-0 [overflow-wrap:anywhere]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Share2 className="w-4 h-4 text-primary" />

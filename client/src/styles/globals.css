@@ -2,6 +2,7 @@
 @import '@fontsource-variable/plus-jakarta-sans';
 @import 'leaflet/dist/leaflet.css';
 @import './tokens.css';
+@import './app-shell.css';
 
 @tailwind base;
 @tailwind components;

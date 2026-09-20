@@ -28,38 +28,208 @@ const CALLER_PRESETS = [
   { name: 'Cab Driver', number: '+91 98765 43216', color: '#D97706' },
 ];
 
-const BUILTIN_SCRIPTS = [
-  {
-    name: 'Mom — Come home soon',
-    lines: [
-      { line: 'Beta, where have you reached? It is getting late.', pauseSeconds: 3 },
-      { line: 'I am waiting by the gate. Should your brother come pick you up?', pauseSeconds: 3 },
-      { line: 'Okay, keep your phone in hand and hurry home safely.', pauseSeconds: 2 },
-    ],
-  },
-  {
-    name: 'Dad — Outside picking you up',
-    lines: [
-      { line: 'Hello, I have parked the car right at the main crossing.', pauseSeconds: 3 },
-      { line: 'Are you walking towards the signal now?', pauseSeconds: 3 },
-      { line: 'Alright, see you in two minutes.', pauseSeconds: 2 },
-    ],
-  },
-  {
-    name: 'Friend — At the gate',
-    lines: [
-      { line: 'Hey, where are you? We are all standing near the entrance.', pauseSeconds: 3 },
-      { line: 'Hurry up, we are waiting for you.', pauseSeconds: 2 },
-    ],
-  },
-  {
-    name: 'Boss — Urgent work call',
-    lines: [
-      { line: 'Hi, sorry to call late, but we need you to check this immediately.', pauseSeconds: 3 },
-      { line: 'Can you step aside and take a look right now?', pauseSeconds: 2 },
-    ],
-  },
+export const LANGUAGE_OPTIONS = [
+  { id: 'en-IN', label: 'English (India)', native: 'English' },
+  { id: 'hi-IN', label: 'Hindi', native: 'हिन्दी' },
+  { id: 'hinglish', label: 'Hinglish (Urban Mix)', native: 'Hinglish' },
+  { id: 'pa-IN', label: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
+  { id: 'ta-IN', label: 'Tamil', native: 'தமிழ்' },
+  { id: 'te-IN', label: 'Telugu', native: 'తెలుగు' },
+  { id: 'bn-IN', label: 'Bengali', native: 'বাংলা' },
+  { id: 'mr-IN', label: 'Marathi', native: 'मराठी' },
 ];
+
+export interface ScriptOption {
+  id: string;
+  name: string;
+  lines: { line: string; pauseSeconds: number }[];
+}
+
+export const MULTILINGUAL_SCRIPTS: Record<string, ScriptOption[]> = {
+  'en-IN': [
+    {
+      id: 'en_mom',
+      name: 'Mom — Checking in & waiting outside',
+      lines: [
+        { line: 'Hello beta, where are you right now? It is getting quite late.', pauseSeconds: 4 },
+        { line: 'Are you still on the main road? Is there proper street lighting there?', pauseSeconds: 3.5 },
+        { line: 'I was thinking, should your brother come meet you at the intersection with the car?', pauseSeconds: 4 },
+        { line: 'Alright, keep the phone on speaker and keep walking towards the gate.', pauseSeconds: 3.5 },
+        { line: 'I am standing on the balcony watching the road right now. Can you see our building?', pauseSeconds: 4 },
+        { line: 'Okay, do not hang up until you come inside. See you in two minutes.', pauseSeconds: 2 },
+      ],
+    },
+    {
+      id: 'en_dad',
+      name: 'Dad — Car waiting at the crossing',
+      lines: [
+        { line: 'Hey, I have parked the car right near the traffic signal crossing.', pauseSeconds: 4 },
+        { line: 'Did you leave the office or are you walking out right now?', pauseSeconds: 3.5 },
+        { line: 'Keep straight on the well-lit pavement, do not take the narrow lane.', pauseSeconds: 3.5 },
+        { line: 'I have my hazard lights flashing so you can spot the car easily.', pauseSeconds: 4 },
+        { line: 'Can you see the white sedan parked next to the bank?', pauseSeconds: 3.5 },
+        { line: 'Yes, I see you waving. Come on in, the doors are unlocked.', pauseSeconds: 2 },
+      ],
+    },
+    {
+      id: 'en_friend',
+      name: 'Friend — Waiting at the venue gate',
+      lines: [
+        { line: 'Hey, where have you reached? All of us are standing right outside.', pauseSeconds: 3.5 },
+        { line: 'Is your cab stuck in traffic or are you already walking up the lane?', pauseSeconds: 4 },
+        { line: 'Rahul and Sneha just reached as well. We saved a table right by the entrance.', pauseSeconds: 4 },
+        { line: 'Should one of us walk over to the corner to walk with you?', pauseSeconds: 3.5 },
+        { line: 'Okay cool, keep talking so I know when you are turning into the lane.', pauseSeconds: 3.5 },
+        { line: 'Awesome, I think I see you right there. Hurry over!', pauseSeconds: 2 },
+      ],
+    },
+    {
+      id: 'en_boss',
+      name: 'Manager — Urgent client conference call',
+      lines: [
+        { line: 'Hi, sorry to ring so late, but the leadership team needs an urgent sync on the deployment.', pauseSeconds: 4 },
+        { line: 'Are you in a spot where you can step into a quiet corner and review the alert?', pauseSeconds: 3.5 },
+        { line: 'We have the client engineering lead on the line waiting for our sign-off.', pauseSeconds: 4 },
+        { line: 'Could you confirm if you have your laptop accessible right now or within ten minutes?', pauseSeconds: 3.5 },
+        { line: 'Understood. Please excuse yourself immediately and join the bridge link I just messaged.', pauseSeconds: 3 },
+        { line: 'Thanks for stepping out quickly. Joining the bridge now.', pauseSeconds: 2 },
+      ],
+    },
+  ],
+  'hi-IN': [
+    {
+      id: 'hi_mom',
+      name: 'माँ — घर पहुँचने का इंतज़ार (Mom checking in)',
+      lines: [
+        { line: 'हाँ बेटा, कहाँ तक पहुँचे? बहुत देर हो गई है, मुझे चिंता हो रही थी।', pauseSeconds: 4 },
+        { line: 'मेन रोड से ही आ रहे हो ना? वहाँ स्ट्रीट लाइट्स जल रही हैं ठीक से?', pauseSeconds: 3.5 },
+        { line: 'भैया को बोलूँ क्या? वो स्कूटी लेके मेन चौराहे तक आ जाएगा तुम्हें लेने।', pauseSeconds: 4 },
+        { line: 'अच्छा ठीक है, फोन काटना मत, बात करते-करते ही सीधे घर की तरफ आओ।', pauseSeconds: 3.5 },
+        { line: 'मैं बालकनी से देख रही हूँ, कॉलोनी का गेट खुला हुआ है।', pauseSeconds: 3.5 },
+        { line: 'हाँ दिख गए तुम, चलो जल्दी अंदर आ जाओ, दरवाज़ा खुला है।', pauseSeconds: 2 },
+      ],
+    },
+    {
+      id: 'hi_dad',
+      name: 'पापा — गाड़ी लेकर मोड़ पर खड़े हैं (Dad at crossing)',
+      lines: [
+        { line: 'नमस्ते बेटा, मैं गाड़ी लेके मेन रोड वाले मोड़ पर खड़ा हूँ।', pauseSeconds: 4 },
+        { line: 'तुम मेट्रो स्टेशन से निकल गए या अभी पैदल आ रहे हो?', pauseSeconds: 3.5 },
+        { line: 'अकेले मत आना उस सुनसान गली से, सीधे बड़े रास्ते से ही मोड़ पर आओ।', pauseSeconds: 4 },
+        { line: 'मैंने गाड़ी की पार्किंग लाइट ऑन कर रखी है ताकि तुम्हें दूर से दिख जाए।', pauseSeconds: 3.5 },
+        { line: 'हाँ, लाल बत्ती के पास ही खड़ा हूँ। कितने मिनट लगेंगे तुम्हें?', pauseSeconds: 3.5 },
+        { line: 'ठीक है, मैं यहीं इंतज़ार कर रहा हूँ, आराम से ध्यान से आओ।', pauseSeconds: 2 },
+      ],
+    },
+    {
+      id: 'hi_friend',
+      name: 'दोस्त — गेट के पास खड़े हैं (Friend at entrance)',
+      lines: [
+        { line: 'अरे कहाँ रह गए भाई? हम सब कब से मेन गेट पर इंतज़ार कर रहे हैं।', pauseSeconds: 3.5 },
+        { line: 'तुम्हारी ऑटो पहुँची या पैदल आ रहे हो? रास्ता तो ठीक है ना वहाँ?', pauseSeconds: 4 },
+        { line: 'अमन भी यहीं खड़ा है, बोल रहा है आगे तक आके तुम्हें रिसीव कर ले।', pauseSeconds: 3.5 },
+        { line: 'चलो फोन चालू रखो, बिल्कुल भी अकेले मत रुको वहाँ।', pauseSeconds: 4 },
+        { line: 'हाँ बस सामने ही खड़े हैं, नीली टी-शर्ट में अमन दिख रहा है ना?', pauseSeconds: 3.5 },
+        { line: 'चल बढ़िया, फटाफट आ जा अंदर!', pauseSeconds: 2 },
+      ],
+    },
+  ],
+  'hinglish': [
+    {
+      id: 'hinglish_mom',
+      name: 'Mom — Where have you reached? (Hinglish)',
+      lines: [
+        { line: 'Hey beta, kahan tak pahuche? It is getting quite late.', pauseSeconds: 4 },
+        { line: 'Main road pe hi ho na? Street lights properly on hain wahan?', pauseSeconds: 3.5 },
+        { line: 'Bhaiya ko bolu kya bike leke crossing tak aa jaye pick karne?', pauseSeconds: 4 },
+        { line: 'Theek hai, phone mat kaatna. Speaker pe rakho aur continuously baat karo.', pauseSeconds: 3.5 },
+        { line: 'Main balcony se watch kar rahi hoon, main gate open hai.', pauseSeconds: 4 },
+        { line: 'Haan, I can see you coming. Jaldi aao andar safe!', pauseSeconds: 2 },
+      ],
+    },
+    {
+      id: 'hinglish_colleague',
+      name: 'Colleague — Urgent escalations call',
+      lines: [
+        { line: 'Hey, sorry to disturb you this late, but prod server pe issue aa gaya hai.', pauseSeconds: 4 },
+        { line: 'Can you excuse yourself right now and check the urgent slack ping?', pauseSeconds: 3.5 },
+        { line: 'Team call already chal rahi hai, we really need your input on this.', pauseSeconds: 4 },
+        { line: 'Are you somewhere quiet where you can take this call for 5 minutes?', pauseSeconds: 3.5 },
+        { line: 'Great, join the meeting link immediately please, waiting for you.', pauseSeconds: 2 },
+      ],
+    },
+  ],
+  'pa-IN': [
+    {
+      id: 'pa_family',
+      name: 'ਘਰੋਂ ਫੋਨ — ਕਿੱਥੇ ਤੱਕ ਪਹੁੰਚੇ (Home check-in)',
+      lines: [
+        { line: 'ਹਾਂਜੀ ਪੁੱਤ, ਕਿੱਥੇ ਤੱਕ ਪਹੁੰਚ ਗਏ? ਬੜਾ ਟਾਈਮ ਹੋ ਗਿਆ ਹੈ।', pauseSeconds: 4 },
+        { line: 'ਮੇਨ ਸੜਕ ਤੇ ਹੀ ਆ ਰਹੇ ਹੋ ਨਾ? ਉੱਥੇ ਲਾਈਟਾਂ ਠੀਕ ਚੱਲ ਰਹੀਆਂ ਨੇ?', pauseSeconds: 3.5 },
+        { line: 'ਮੈਂ ਵੱਡੇ ਵੀਰ ਨੂੰ ਸਕੂਟਰ ਲੈ ਕੇ ਮੋੜ ਤੇ ਭੇਜਾਂ ਤੁਹਾਨੂੰ ਲੈਣ ਲਈ?', pauseSeconds: 4 },
+        { line: 'ਚਲੋ ਠੀਕ ਹੈ, ਫੋਨ ਨਾ ਕੱਟਣਾ, ਗੱਲ ਕਰਦੇ-ਕਰਦੇ ਸਿੱਧਾ ਘਰ ਵੱਲ ਆਓ।', pauseSeconds: 3.5 },
+        { line: 'ਮੈਂ ਬਾਹਰ ਗੇਟ ਤੇ ਹੀ ਖੜ੍ਹਾ ਹਾਂ, ਕਿੰਨਾ ਸਮਾਂ ਲੱਗੇਗਾ ਹੋਰ?', pauseSeconds: 3.5 },
+        { line: 'ਹਾਂਜੀ ਦਿਖ ਗਏ ਹੋ ਤੁਸੀਂ, ਚਲੋ ਛੇਤੀ ਅੰਦਰ ਆ ਜਾਓ।', pauseSeconds: 2 },
+      ],
+    },
+  ],
+  'ta-IN': [
+    {
+      id: 'ta_family',
+      name: 'அம்மா — எங்கே வந்திருக்கீங்க? (Mother check-in)',
+      lines: [
+        { line: 'ஹலோ, எங்க வரைக்கும் வந்திருக்கீங்க? ரொம்ப நேரம் ஆயிடுச்சு, பயமா இருக்கு.', pauseSeconds: 4 },
+        { line: 'மெயின் ரோடு வழியா தான் வரீங்களா? வெளிச்சம் சரியா இருக்கா அங்க?', pauseSeconds: 3.5 },
+        { line: 'தம்பிய வண்டி எடுத்துட்டு சிக்னல் வரைக்கும் வரச் சொல்லவா உங்களை கூட்டிட்டு வர?', pauseSeconds: 4 },
+        { line: 'சரிங்க, போனை கட் பண்ணாதீங்க. பேசிக்கிட்டே சீக்கிரம் வாங்க.', pauseSeconds: 3.5 },
+        { line: 'நான் பால்கனில இருந்து பாத்துட்டே இருக்கேன். கேட் திறந்து தான் இருக்கு.', pauseSeconds: 3.5 },
+        { line: 'ஆமா பாத்துட்டேன், பத்திரமா சீக்கிரம் உள்ள வாங்க.', pauseSeconds: 2 },
+      ],
+    },
+  ],
+  'te-IN': [
+    {
+      id: 'te_family',
+      name: 'అమ్మ — ఎక్కడి దాకా వచ్చావు? (Mother check-in)',
+      lines: [
+        { line: 'హలో, ఎక్కడి దాకా వచ్చావు నాన్నా? చాలా లేట్ అయిపోయింది, కంగారుగా ఉంది.', pauseSeconds: 4 },
+        { line: 'మెయిన్ రోడ్డు మీదే వస్తున్నావా? అక్కడ వీధి దీపాలు వెలుగుతున్నాయా?', pauseSeconds: 3.5 },
+        { line: 'తమ్ముడిని బండి మీద జంక్షన్ వరకు రమ్మంటావా నిన్ను తీసుకురావడానికి?', pauseSeconds: 4 },
+        { line: 'సరే, ఫోన్ కట్ చేయకుండా మాట్లాడుతూనే త్వరగా ఇంటికి రా.', pauseSeconds: 3.5 },
+        { line: 'నేను గేటు దగ్గరే నిలబడి చూస్తున్నాను. ఇంకా ఎంత సమయం పడుతుంది?', pauseSeconds: 3.5 },
+        { line: 'అవును కనిపించావు, త్వరగా లోపలికి వచ్చేయ్ జాగ్రత్తగా.', pauseSeconds: 2 },
+      ],
+    },
+  ],
+  'bn-IN': [
+    {
+      id: 'bn_family',
+      name: 'মা — কোথায় পৌঁছালে? (Mother check-in)',
+      lines: [
+        { line: 'হ্যালো, কোথায় পৌঁছালে? অনেক রাত হয়ে গেছে কিন্তু, চিন্তা হচ্ছে খুব।', pauseSeconds: 4 },
+        { line: 'মেন রাস্তা দিয়ে আসছ তো? ওখানে আলো ঠিকঠাক জ্বলছে তো?', pauseSeconds: 3.5 },
+        { line: 'দাদাকে বলব মোড়ের মাথায় গিয়ে তোমাকে বাইকে তুলে নিয়ে আসতে?', pauseSeconds: 4 },
+        { line: 'বেশ, ফোন একদম কাটবে না, কথা বলতে বলতে সোজা চলে এসো।', pauseSeconds: 3.5 },
+        { line: 'আমি বারান্দায় দাঁড়িয়ে রাস্তা দেখছি, বাড়ির গেট খোলাই আছে।', pauseSeconds: 3.5 },
+        { line: 'হ্যাঁ দেখতে পেয়েছি, তাড়াতাড়ি সাবধানে ভেতরে চলে এসো।', pauseSeconds: 2 },
+      ],
+    },
+  ],
+  'mr-IN': [
+    {
+      id: 'mr_family',
+      name: 'आई — कुठे पोहोचलास? (Mother check-in)',
+      lines: [
+        { line: 'हॅलो, कुठे पोहोचलास रे? खूप उशीर झाला आहे, काळजी वाटत होती.', pauseSeconds: 4 },
+        { line: 'मेन रस्त्यानेच येतो आहेस ना? तिकडे पथदिवे चालू आहेत का?', pauseSeconds: 3.5 },
+        { line: 'दादाला कॉर्नरवर गाडी घेऊन पाठवू का तुला घ्यायला?', pauseSeconds: 4 },
+        { line: 'ठीक आहे, फोन चालूच ठेव आणि बोलत बोलतच सरळ घरी ये.', pauseSeconds: 3.5 },
+        { line: 'मी बाल्कनीतून बघते आहे, सोसायटीचा गेट उघडाच आहे.', pauseSeconds: 3.5 },
+        { line: 'हो दिसलास तू, चल पटकन आत ये सांभाळून.', pauseSeconds: 2 },
+      ],
+    },
+  ],
+};
 
 export const FakeCallPage: React.FC = () => {
   const [calls, setCalls] = useState<FakeCallRow[]>([]);
@@ -74,6 +244,7 @@ export const FakeCallPage: React.FC = () => {
   const [ringtone, setRingtone] = useState<'classic' | 'digital' | 'vibrate'>('classic');
   const [uiStyle, setUiStyle] = useState<'classic' | 'modern'>('classic');
   const [ringSeconds, setRingSeconds] = useState(30);
+  const [selectedLanguage, setSelectedLanguage] = useState('en-IN');
   const [selectedScriptIdx, setSelectedScriptIdx] = useState(0);
 
   const navigate = useNavigate();
@@ -117,7 +288,13 @@ export const FakeCallPage: React.FC = () => {
     else if (delayOption === '10m') delayMs = 600000;
 
     const scheduledFor = new Date(Date.now() + delayMs).toISOString();
-    const scriptJson = JSON.stringify(BUILTIN_SCRIPTS[selectedScriptIdx].lines);
+    const scriptsForLang = MULTILINGUAL_SCRIPTS[selectedLanguage] || MULTILINGUAL_SCRIPTS['en-IN'];
+    const chosenScript = scriptsForLang[selectedScriptIdx] || scriptsForLang[0];
+    const scriptJson = JSON.stringify({
+      language: selectedLanguage,
+      scriptName: chosenScript.name,
+      lines: chosenScript.lines,
+    });
 
     try {
       const res = await apiFetch<any>('/api/fake-calls', {
@@ -218,8 +395,25 @@ export const FakeCallPage: React.FC = () => {
                       {call.caller_name[0]}
                     </div>
                     <div>
-                      <div className="font-heading font-bold text-sm text-text">
-                        {call.caller_name}
+                      <div className="flex items-center gap-2">
+                        <span className="font-heading font-bold text-sm text-text">
+                          {call.caller_name}
+                        </span>
+                        {(() => {
+                          try {
+                            const parsed = JSON.parse(call.script_json);
+                            const langKey = parsed.language || 'en-IN';
+                            const turns = Array.isArray(parsed) ? parsed.length : (parsed.lines?.length || 0);
+                            const langObj = LANGUAGE_OPTIONS.find((l) => l.id === langKey);
+                            return (
+                              <span className="px-2 py-0.5 rounded-md bg-primary-soft text-primary font-bold text-[10px]">
+                                {langObj ? langObj.native : 'English'} • {turns} turns
+                              </span>
+                            );
+                          } catch {
+                            return null;
+                          }
+                        })()}
                       </div>
                       <div className="text-xs text-text-muted">{call.caller_number}</div>
                       <div className="text-[11px] text-text-muted mt-0.5 font-mono">
@@ -385,20 +579,61 @@ export const FakeCallPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Script Selection */}
+              {/* Voice Language Selection */}
               <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-text block">Spoken Script</span>
+                <span className="text-xs font-semibold text-text block">Voice Language / भाषा</span>
+                <select
+                  value={selectedLanguage}
+                  onChange={(e) => {
+                    setSelectedLanguage(e.target.value);
+                    setSelectedScriptIdx(0);
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-input-bg text-xs font-medium text-text focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {LANGUAGE_OPTIONS.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.label} — {l.native}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Script Scenario Selection */}
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-text block">Spoken Dialogue Scenario (5–7 turns)</span>
                 <select
                   value={selectedScriptIdx}
                   onChange={(e) => setSelectedScriptIdx(parseInt(e.target.value))}
-                  className="w-full px-3 py-2 rounded-lg border border-border bg-input-bg text-xs"
+                  className="w-full px-3 py-2 rounded-lg border border-border bg-input-bg text-xs font-medium text-text focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  {BUILTIN_SCRIPTS.map((s, idx) => (
-                    <option key={idx} value={idx}>
+                  {(MULTILINGUAL_SCRIPTS[selectedLanguage] || MULTILINGUAL_SCRIPTS['en-IN']).map((s, idx) => (
+                    <option key={s.id} value={idx}>
                       {s.name} ({s.lines.length} turns)
                     </option>
                   ))}
                 </select>
+
+                {/* Live Script Preview */}
+                {(() => {
+                  const currentScript =
+                    (MULTILINGUAL_SCRIPTS[selectedLanguage] || MULTILINGUAL_SCRIPTS['en-IN'])[selectedScriptIdx] ||
+                    (MULTILINGUAL_SCRIPTS[selectedLanguage] || MULTILINGUAL_SCRIPTS['en-IN'])[0];
+                  if (!currentScript) return null;
+                  return (
+                    <div className="mt-2 p-3 bg-surface-raised/80 border border-border rounded-xl text-[11px] space-y-1.5 max-h-36 overflow-y-auto">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted flex items-center justify-between">
+                        <span>Dialogue Turns ({currentScript.lines.length} turns)</span>
+                        <span className="text-primary font-mono font-medium">Conversational pauses enabled</span>
+                      </div>
+                      {currentScript.lines.map((l, i) => (
+                        <div key={i} className="flex items-start gap-2 text-text">
+                          <span className="font-mono text-primary text-[10px] shrink-0 font-bold">Turn {i + 1}:</span>
+                          <span className="italic leading-tight">&ldquo;{l.line}&rdquo;</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Submit Buttons */}

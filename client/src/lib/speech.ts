@@ -7,6 +7,17 @@ export interface ScriptLine {
   pauseSeconds: number;
 }
 
+export const LANGUAGE_VOICE_MAP: Record<string, { code: string; fallbackTags: string[] }> = {
+  'en-IN': { code: 'en-IN', fallbackTags: ['en-IN', 'en-GB', 'en-US'] },
+  'hi-IN': { code: 'hi-IN', fallbackTags: ['hi-IN', 'hi', 'en-IN'] },
+  'hinglish': { code: 'en-IN', fallbackTags: ['en-IN', 'hi-IN', 'en-GB'] },
+  'pa-IN': { code: 'pa-IN', fallbackTags: ['pa-IN', 'pa', 'hi-IN', 'en-IN'] },
+  'ta-IN': { code: 'ta-IN', fallbackTags: ['ta-IN', 'ta', 'en-IN'] },
+  'te-IN': { code: 'te-IN', fallbackTags: ['te-IN', 'te', 'en-IN'] },
+  'bn-IN': { code: 'bn-IN', fallbackTags: ['bn-IN', 'bn', 'hi-IN', 'en-IN'] },
+  'mr-IN': { code: 'mr-IN', fallbackTags: ['mr-IN', 'mr', 'hi-IN', 'en-IN'] },
+};
+
 export class FakeCallSpeaker {
   private isSpeaking = false;
   private cancelled = false;
@@ -22,7 +33,8 @@ export class FakeCallSpeaker {
   public async speakScript(
     lines: ScriptLine[],
     onLineStart: (lineIdx: number, text: string) => void,
-    onComplete: () => void
+    onComplete: () => void,
+    language: string = 'en-IN'
   ): Promise<void> {
     if (!('speechSynthesis' in window)) {
       console.warn('SpeechSynthesis is not supported in this browser.');
@@ -34,14 +46,28 @@ export class FakeCallSpeaker {
     this.isSpeaking = true;
     window.speechSynthesis.cancel();
 
-    // Prefer an Indian English or British voice for natural sound
+    // Select voice matching requested language with fallbacks
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice =
-      voices.find((v) => v.lang === 'en-IN') ||
-      voices.find((v) => v.lang === 'hi-IN') ||
-      voices.find((v) => v.lang === 'en-GB') ||
-      voices.find((v) => v.lang.startsWith('en')) ||
-      voices[0];
+    const langConfig = LANGUAGE_VOICE_MAP[language] || {
+      code: language,
+      fallbackTags: [language, 'en-IN', 'en-GB', 'en-US'],
+    };
+
+    let preferredVoice: SpeechSynthesisVoice | undefined;
+    for (const tag of langConfig.fallbackTags) {
+      const match = voices.find(
+        (v) =>
+          v.lang.toLowerCase() === tag.toLowerCase() ||
+          v.lang.toLowerCase().replace('_', '-').startsWith(tag.toLowerCase())
+      );
+      if (match) {
+        preferredVoice = match;
+        break;
+      }
+    }
+    if (!preferredVoice && voices.length > 0) {
+      preferredVoice = voices.find((v) => v.lang.startsWith('en')) || voices[0];
+    }
 
     for (let i = 0; i < lines.length; i++) {
       if (this.cancelled) break;
@@ -52,8 +78,10 @@ export class FakeCallSpeaker {
       await new Promise<void>((resolve) => {
         const utterance = new SpeechSynthesisUtterance(item.line);
         if (preferredVoice) utterance.voice = preferredVoice;
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
+        utterance.lang = langConfig.code;
+        // Human-tuned cadence: rate 0.92 for calm, natural cadence; pitch 1.02 for warm timbre
+        utterance.rate = 0.92;
+        utterance.pitch = 1.02;
 
         utterance.onend = () => resolve();
         utterance.onerror = () => resolve();
@@ -63,8 +91,8 @@ export class FakeCallSpeaker {
 
       if (this.cancelled) break;
 
-      // Natural pause between turns
-      const pauseMs = (item.pauseSeconds || 3) * 1000;
+      // Natural conversational pause between turns (allows user to respond)
+      const pauseMs = (item.pauseSeconds || 3.5) * 1000;
       await new Promise((resolve) => setTimeout(resolve, pauseMs));
     }
 
@@ -142,8 +170,13 @@ export const fakeCallSpeaker = new FakeCallSpeaker();
 export const voiceSosListener = new VoiceSosListener();
 
 export const speechEngine = {
-  speakScript: (lines: ScriptLine[], onTurn?: (turnIdx: number) => void, onDone?: () => void) => {
-    return fakeCallSpeaker.speakScript(lines, (idx, _text) => onTurn?.(idx), () => onDone?.());
+  speakScript: (
+    lines: ScriptLine[],
+    onTurn?: (turnIdx: number) => void,
+    onDone?: () => void,
+    language: string = 'en-IN'
+  ) => {
+    return fakeCallSpeaker.speakScript(lines, (idx, _text) => onTurn?.(idx), () => onDone?.(), language);
   },
   stop: () => fakeCallSpeaker.cancel(),
 };

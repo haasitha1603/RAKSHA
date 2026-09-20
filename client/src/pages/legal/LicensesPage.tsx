@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { FileCode2, Search, ExternalLink } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { Navbar } from '../../components/layout/Navbar.js';
-import { Footer } from '../../components/layout/Footer.js';
 import rawLicenses from '../../licenses.json';
 
 interface LicenseItem {
@@ -42,7 +40,7 @@ export const LicensesPage: React.FC = () => {
     return filtered.slice(start, start + pageSize);
   }, [filtered, page]);
 
-  const totalPages = Math.ceil(filtered.length / pageSize);
+  const totalPages = Math.ceil(filtered.length / pageSize) || 1;
 
   return (
     <>
@@ -50,10 +48,7 @@ export const LicensesPage: React.FC = () => {
         <title>Open Source Licenses — Raksha</title>
       </Helmet>
 
-      <div className="min-h-screen bg-bg text-text flex flex-col justify-between">
-        <Navbar />
-
-        <main className="max-w-4xl mx-auto px-4 py-10 space-y-6 flex-1 w-full">
+      <div className="max-w-4xl mx-auto px-4 py-10 space-y-6 w-full">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-soft text-primary font-bold text-xs rounded-full">
               <FileCode2 className="w-3.5 h-3.5" />
@@ -142,9 +137,6 @@ export const LicensesPage: React.FC = () => {
               </div>
             </div>
           )}
-        </main>
-
-        <Footer />
       </div>
     </>
   );

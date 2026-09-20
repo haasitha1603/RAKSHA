@@ -1,8 +1,6 @@
 import React from 'react';
 import { FileText, AlertTriangle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { Navbar } from '../../components/layout/Navbar.js';
-import { Footer } from '../../components/layout/Footer.js';
 
 export const TermsPage: React.FC = () => {
   return (
@@ -11,10 +9,7 @@ export const TermsPage: React.FC = () => {
         <title>Terms of Service — Raksha</title>
       </Helmet>
 
-      <div className="min-h-screen bg-bg text-text flex flex-col justify-between">
-        <Navbar />
-
-        <main className="max-w-3xl mx-auto px-4 py-10 space-y-8 flex-1">
+      <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-soft text-primary font-bold text-xs rounded-full">
               <FileText className="w-3.5 h-3.5" />
@@ -67,9 +62,6 @@ export const TermsPage: React.FC = () => {
               </p>
             </section>
           </div>
-        </main>
-
-        <Footer />
       </div>
     </>
   );

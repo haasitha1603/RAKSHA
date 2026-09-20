@@ -48,6 +48,8 @@ export const FakeCallIncomingPage: React.FC = () => {
   const [keypadBuffer, setKeypadBuffer] = useState('');
   const [currentScriptTurn, setCurrentScriptTurn] = useState<number>(-1);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [scriptLanguage, setScriptLanguage] = useState('en-IN');
+  const [totalScriptTurns, setTotalScriptTurns] = useState(0);
   const [duressTriggered, setDuressTriggered] = useState(false);
 
   const ringtoneStopRef = useRef<(() => void) | null>(null);
@@ -118,20 +120,33 @@ export const FakeCallIncomingPage: React.FC = () => {
 
     setCallState('connected');
 
-    // Parse script & play speech synthesis
+    // Parse script & play speech synthesis with multilingual support
     if (call?.script_json) {
       try {
-        const script: ScriptLine[] = JSON.parse(call.script_json);
-        if (Array.isArray(script) && script.length > 0) {
+        let scriptLines: ScriptLine[] = [];
+        let callLanguage: string = 'en-IN';
+        const parsed = JSON.parse(call.script_json);
+        if (Array.isArray(parsed)) {
+          scriptLines = parsed;
+        } else if (parsed && Array.isArray(parsed.lines)) {
+          scriptLines = parsed.lines;
+          callLanguage = parsed.language || 'en-IN';
+        }
+
+        setScriptLanguage(callLanguage);
+        setTotalScriptTurns(scriptLines.length);
+
+        if (scriptLines.length > 0) {
           speechEngine.speakScript(
-            script,
+            scriptLines,
             (turnIdx: number) => {
               setCurrentScriptTurn(turnIdx);
               setIsSpeaking(true);
             },
             () => {
               setIsSpeaking(false);
-            }
+            },
+            callLanguage
           );
         }
       } catch (err) {
@@ -212,9 +227,14 @@ export const FakeCallIncomingPage: React.FC = () => {
       <div className="fixed inset-0 z-50 bg-gradient-to-b from-neutral-900 via-neutral-950 to-black text-white flex flex-col justify-between p-6 select-none font-sans overflow-hidden">
         {/* Top bar info */}
         <div className="flex items-center justify-between text-xs text-neutral-400 pt-2">
-          <div className="flex items-center gap-1.5 font-medium">
+          <div className="flex items-center gap-2 font-medium">
             <Shield className="w-3.5 h-3.5 text-primary" />
             <span>Raksha Guard</span>
+            {scriptLanguage && (
+              <span className="px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 text-[10px] font-mono border border-neutral-700">
+                {scriptLanguage}
+              </span>
+            )}
           </div>
           {duressTriggered && (
             <div className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
@@ -260,7 +280,7 @@ export const FakeCallIncomingPage: React.FC = () => {
               {callState === 'ringing'
                 ? 'Incoming Call...'
                 : callState === 'connected'
-                ? formatDuration(callSeconds)
+                ? `${formatDuration(callSeconds)}${totalScriptTurns > 0 && currentScriptTurn >= 0 ? ` • Turn ${currentScriptTurn + 1}/${totalScriptTurns}` : ''}`
                 : 'Call Ended'}
             </p>
           </div>
