@@ -5,6 +5,12 @@ const { Pool } = pg;
 
 export const pool = new Pool({
   connectionString: config.DATABASE_URL,
+  ssl:
+    config.DATABASE_URL.includes('sslmode=require') ||
+    config.DATABASE_URL.includes('render.com') ||
+    (config.NODE_ENV === 'production' && !config.DATABASE_URL.includes('localhost'))
+      ? { rejectUnauthorized: false }
+      : undefined,
 });
 
 pool.on('error', (err) => {
