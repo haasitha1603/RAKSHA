@@ -47,6 +47,7 @@ export const FakeCallIncomingPage: React.FC = () => {
   const [showKeypad, setShowKeypad] = useState(false);
   const [keypadBuffer, setKeypadBuffer] = useState('');
   const [currentScriptTurn, setCurrentScriptTurn] = useState<number>(-1);
+  const [currentLineText, setCurrentLineText] = useState<string>('');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [scriptLanguage, setScriptLanguage] = useState('en-IN');
   const [totalScriptTurns, setTotalScriptTurns] = useState(0);
@@ -139,12 +140,14 @@ export const FakeCallIncomingPage: React.FC = () => {
         if (scriptLines.length > 0) {
           speechEngine.speakScript(
             scriptLines,
-            (turnIdx: number) => {
+            (turnIdx: number, lineText: string) => {
               setCurrentScriptTurn(turnIdx);
+              setCurrentLineText(lineText);
               setIsSpeaking(true);
             },
             () => {
               setIsSpeaking(false);
+              setCurrentLineText('');
             },
             callLanguage
           );
@@ -287,6 +290,19 @@ export const FakeCallIncomingPage: React.FC = () => {
                 : 'Call Ended'}
             </p>
           </div>
+
+          {/* Real-time Voice Dialogue / Subtitle Display */}
+          {callState === 'connected' && currentLineText && (
+            <div className="max-w-xs mx-auto px-4 py-2.5 rounded-2xl bg-neutral-900/90 border border-neutral-800 shadow-xl backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-emerald-400 font-semibold uppercase tracking-wider mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>{callerName} is speaking ({scriptLanguage})</span>
+              </div>
+              <p className="text-sm font-medium text-neutral-100 italic leading-relaxed text-center">
+                "{currentLineText}"
+              </p>
+            </div>
+          )}
         </div>
 
         {/* IN-CALL KEYPAD MODAL / OVERLAY */}

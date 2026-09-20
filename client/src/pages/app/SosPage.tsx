@@ -67,7 +67,7 @@ export const SosPage: React.FC = () => {
 
   // Loud SOS siren and vibration
   useEffect(() => {
-    if (activeIncident && !discreetMode && !loudSirenPlaying) {
+    if (activeIncident && !discreetMode) {
       audioSynthesizer.playSiren();
       setLoudSirenPlaying(true);
     }
@@ -75,7 +75,17 @@ export const SosPage: React.FC = () => {
       audioSynthesizer.stopAll();
       setLoudSirenPlaying(false);
     };
-  }, [activeIncident, discreetMode, loudSirenPlaying]);
+  }, [activeIncident, discreetMode]);
+
+  const handleToggleSiren = () => {
+    if (loudSirenPlaying) {
+      audioSynthesizer.stopAll();
+      setLoudSirenPlaying(false);
+    } else {
+      audioSynthesizer.playSiren();
+      setLoudSirenPlaying(true);
+    }
+  };
 
   const handleManualTrigger = (isDiscreet: boolean) => {
     setDuressFakeCancelled(false);
@@ -272,8 +282,21 @@ export const SosPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Resolve Flow Button */}
-            <div className="pt-3">
+            {/* Siren and Resolve Flow Buttons */}
+            <div className="pt-3 space-y-2">
+              <button
+                type="button"
+                onClick={handleToggleSiren}
+                className={`w-full py-3 border font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md ${
+                  loudSirenPlaying
+                    ? 'bg-red-600 border-red-500 text-white animate-pulse'
+                    : 'bg-surface border-border text-text hover:bg-surface-raised'
+                }`}
+              >
+                {loudSirenPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-emergency" />}
+                <span>{loudSirenPlaying ? 'Silence Alarm Siren' : 'Sound Maximum Volume Alarm Siren'}</span>
+              </button>
+
               <button
                 onClick={() => setResolveModalOpen(true)}
                 className="w-full py-3 bg-surface border border-border text-text font-bold text-xs rounded-xl hover:bg-surface-raised transition-colors"
@@ -324,6 +347,36 @@ export const SosPage: React.FC = () => {
                 className="w-full py-2.5 bg-surface-raised border border-border hover:border-primary text-text font-semibold text-xs rounded-xl transition-colors"
               >
                 Trigger Discreet SOS
+              </button>
+            </div>
+
+            {/* Instant High Volume Alarm Siren Card */}
+            <div className="p-4 bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60 rounded-2xl shadow-sm text-left space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="w-4 h-4 text-emergency" />
+                  <span className="text-xs font-bold text-text">Deterrent Alarm Siren</span>
+                </div>
+                {loudSirenPlaying && (
+                  <span className="text-[10px] font-bold text-white bg-red-600 px-2 py-0.5 rounded-full animate-pulse">
+                    SOUNDING
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Plays a piercing high-volume dual-frequency acoustic alarm to attract immediate attention and deter threats.
+              </p>
+              <button
+                type="button"
+                onClick={handleToggleSiren}
+                className={`w-full py-2.5 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm ${
+                  loudSirenPlaying
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-surface border border-emergency text-emergency hover:bg-red-50 dark:hover:bg-red-950/50'
+                }`}
+              >
+                {loudSirenPlaying ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                <span>{loudSirenPlaying ? 'Stop Alarm Siren' : 'Sound High Volume Alarm'}</span>
               </button>
             </div>
 

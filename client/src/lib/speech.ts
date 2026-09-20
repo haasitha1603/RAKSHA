@@ -8,9 +8,9 @@ export interface ScriptLine {
 }
 
 export const LANGUAGE_VOICE_MAP: Record<string, { code: string; fallbackTags: string[] }> = {
-  'en-IN': { code: 'en-IN', fallbackTags: ['en-IN', 'en-GB', 'en-US'] },
+  'en-IN': { code: 'en-IN', fallbackTags: ['en-IN', 'en-GB', 'en-US', 'en'] },
   'hi-IN': { code: 'hi-IN', fallbackTags: ['hi-IN', 'hi', 'en-IN'] },
-  'hinglish': { code: 'en-IN', fallbackTags: ['en-IN', 'hi-IN', 'en-GB'] },
+  'hinglish': { code: 'en-IN', fallbackTags: ['en-IN', 'hi-IN', 'en-GB', 'en'] },
   'pa-IN': { code: 'pa-IN', fallbackTags: ['pa-IN', 'pa', 'hi-IN', 'en-IN'] },
   'ta-IN': { code: 'ta-IN', fallbackTags: ['ta-IN', 'ta', 'en-IN'] },
   'te-IN': { code: 'te-IN', fallbackTags: ['te-IN', 'te', 'en-IN'] },
@@ -30,6 +30,32 @@ export class FakeCallSpeaker {
     }
   }
 
+  private async getAvailableVoices(): Promise<SpeechSynthesisVoice[]> {
+    if (!('speechSynthesis' in window)) return [];
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) return voices;
+
+    // In Chrome and some browsers, voices load asynchronously
+    return new Promise((resolve) => {
+      let resolved = false;
+      const onVoicesChanged = () => {
+        if (resolved) return;
+        resolved = true;
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+        resolve(window.speechSynthesis.getVoices());
+      };
+      window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+      // Timeout fallback if voiceschanged never fires
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+          resolve(window.speechSynthesis.getVoices());
+        }
+      }, 500);
+    });
+  }
+
   public async speakScript(
     lines: ScriptLine[],
     onLineStart: (lineIdx: number, text: string) => void,
@@ -46,11 +72,11 @@ export class FakeCallSpeaker {
     this.isSpeaking = true;
     window.speechSynthesis.cancel();
 
-    // Select voice matching requested language with fallbacks
-    const voices = window.speechSynthesis.getVoices();
+    // Select voice matching requested language with fallbacks (waiting for voices to load if needed)
+    const voices = await this.getAvailableVoices();
     const langConfig = LANGUAGE_VOICE_MAP[language] || {
       code: language,
-      fallbackTags: [language, 'en-IN', 'en-GB', 'en-US'],
+      fallbackTags: [language, 'en-IN', 'en-GB', 'en-US', 'en'],
     };
 
     let preferredVoice: SpeechSynthesisVoice | undefined;
@@ -65,8 +91,12 @@ export class FakeCallSpeaker {
         break;
       }
     }
+
+    // Secondary fallback: if non-English language requested and not found locally, try finding any voice or use default
     if (!preferredVoice && voices.length > 0) {
-      preferredVoice = voices.find((v) => v.lang.startsWith('en')) || voices[0];
+      preferredVoice = voices.find((v) => v.lang.toLowerCase().startsWith(langConfig.code.slice(0, 2))) ||
+        voices.find((v) => v.lang.startsWith('en')) ||
+        voices[0];
     }
 
     for (let i = 0; i < lines.length; i++) {
@@ -77,14 +107,37 @@ export class FakeCallSpeaker {
 
       await new Promise<void>((resolve) => {
         const utterance = new SpeechSynthesisUtterance(item.line);
-        if (preferredVoice) utterance.voice = preferredVoice;
-        utterance.lang = langConfig.code;
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+        utterance.lang = preferredVoice?.lang || langConfig.code;
         // Human-tuned cadence: rate 0.92 for calm, natural cadence; pitch 1.02 for warm timbre
         utterance.rate = 0.92;
         utterance.pitch = 1.02;
 
-        utterance.onend = () => resolve();
-        utterance.onerror = () => resolve();
+        let finished = false;
+        utterance.onend = () => {
+          if (!finished) {
+            finished = true;
+            resolve();
+          }
+        };
+        utterance.onerror = (e) => {
+          console.warn('Speech synthesis utterance error/fallback:', e);
+          if (!finished) {
+            finished = true;
+            resolve();
+          }
+        };
+
+        // Safety timeout so speech doesn't hang forever if audio engine stalls
+        const maxExpectedMs = Math.max(3000, item.line.length * 120);
+        setTimeout(() => {
+          if (!finished) {
+            finished = true;
+            resolve();
+          }
+        }, maxExpectedMs);
 
         window.speechSynthesis.speak(utterance);
       });
@@ -121,7 +174,14 @@ export class VoiceSosListener {
       this.recognition.onresult = (event: any) => {
         for (let i = event.resultIndex; i < event.results.length; ++i) {
           const transcript = event.results[i][0].transcript.toLowerCase();
-          if (transcript.includes('help help') || transcript.includes('help me')) {
+          // Matches "help help", "help me", "help! help!", or urgent keywords
+          if (
+            transcript.includes('help help') ||
+            transcript.includes('help me') ||
+            transcript.includes('helphelp') ||
+            transcript.includes('bachao') ||
+            transcript.includes('emergency')
+          ) {
             console.log('Voice SOS Triggered via keyword:', transcript);
             this.onTriggerCallback?.();
             break;
@@ -172,12 +232,11 @@ export const voiceSosListener = new VoiceSosListener();
 export const speechEngine = {
   speakScript: (
     lines: ScriptLine[],
-    onTurn?: (turnIdx: number) => void,
+    onTurn?: (turnIdx: number, lineText: string) => void,
     onDone?: () => void,
     language: string = 'en-IN'
   ) => {
-    return fakeCallSpeaker.speakScript(lines, (idx, _text) => onTurn?.(idx), () => onDone?.(), language);
+    return fakeCallSpeaker.speakScript(lines, (idx, text) => onTurn?.(idx, text), () => onDone?.(), language);
   },
   stop: () => fakeCallSpeaker.cancel(),
 };
-

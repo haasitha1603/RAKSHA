@@ -38,7 +38,7 @@ class AudioSynthesizer {
     }
     for (const { osc, gain } of this.activeNodes) {
       try {
-        gain.gain.linearRampToValueAtTime(0, this.ctx?.currentTime || 0 + 0.05);
+        gain.gain.linearRampToValueAtTime(0, (this.ctx?.currentTime || 0) + 0.05);
         osc.stop((this.ctx?.currentTime || 0) + 0.05);
       } catch {}
     }
@@ -78,21 +78,23 @@ class AudioSynthesizer {
       }
 
       if ('vibrate' in navigator) {
-        navigator.vibrate([600, 300, 600, 300]);
+        navigator.vibrate([200, 100, 200, 100, 200]);
       }
     };
 
     playTrill();
-    this.loopInterval = window.setInterval(playTrill, 2100);
+    this.loopInterval = window.setInterval(playTrill, 2800);
   }
 
   /**
-   * Digital Melody: C5(523)-E5(659)-G5(783)-C6(1046)-G5(783)-E5(659) triangle wave, 1.2s gap
+   * Digital Melody: Marimba-like pentatonic arpeggio looped
    */
   public playDigitalMelody(): void {
     this.stopAll();
     const ctx = this.getContext();
-    const notes = [523.25, 659.25, 783.99, 1046.5, 783.99, 659.25];
+
+    // Notes: C5 (523), E5 (659), G5 (784), B5 (988), C6 (1046)
+    const notes = [523.25, 659.25, 783.99, 987.77, 1046.5];
 
     const playCycle = () => {
       const start = ctx.currentTime;
@@ -102,18 +104,17 @@ class AudioSynthesizer {
         osc.type = 'triangle';
         osc.frequency.value = freq;
 
-        const onTime = start + idx * 0.18;
-        const offTime = onTime + 0.17;
+        const noteStart = start + idx * 0.12;
+        const noteEnd = noteStart + 0.22;
 
-        gain.gain.setValueAtTime(0, onTime);
-        gain.gain.linearRampToValueAtTime(0.3, onTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, offTime);
+        gain.gain.setValueAtTime(0.3, noteStart);
+        gain.gain.exponentialRampToValueAtTime(0.001, noteEnd);
 
         osc.connect(gain);
         gain.connect(ctx.destination);
 
-        osc.start(onTime);
-        osc.stop(offTime);
+        osc.start(noteStart);
+        osc.stop(noteEnd);
       });
 
       if ('vibrate' in navigator) {
@@ -126,38 +127,82 @@ class AudioSynthesizer {
   }
 
   /**
-   * Loud SOS Siren: Continuous sweeping oscillator (700Hz to 1200Hz)
+   * Ultra-High Volume Emergency SOS Alarm / Siren:
+   * Dual oscillating piercing waveform (sawtooth + square) with high dynamic range (gain 0.95),
+   * frequency sweeping between 650Hz and 1850Hz with an aggressive pulsing siren profile.
    */
   public playSiren(): void {
     this.stopAll();
     const ctx = this.getContext();
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sawtooth';
-    gain.gain.value = 0.5;
-
-    // Siren frequency LFO sweep
     const now = ctx.currentTime;
-    osc.frequency.setValueAtTime(700, now);
 
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-    lfo.frequency.value = 1.8; // 1.8 Hz sweep cycle
-    lfoGain.gain.value = 350;
+    // Master output gain node for emergency maximum volume
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0.95, now);
+    masterGain.connect(ctx.destination);
 
-    lfo.connect(osc.frequency);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
+    // Primary piercing sawtooth oscillator
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(750, now);
 
-    osc.start(now);
-    lfo.start(now);
+    // Secondary harmonic square oscillator for maximum auditory punch and deterrent
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(1100, now);
 
-    this.activeNodes.push({ osc, gain });
+    // High frequency sweep LFO 1: 1.6 Hz sweeping 550Hz depth
+    const lfo1 = ctx.createOscillator();
+    const lfoGain1 = ctx.createGain();
+    lfo1.type = 'sine';
+    lfo1.frequency.value = 1.6;
+    lfoGain1.gain.value = 550;
 
+    // Secondary rapid warble LFO 2: adds distinct police / emergency air-horn urgency
+    const lfo2 = ctx.createOscillator();
+    const lfoGain2 = ctx.createGain();
+    lfo2.type = 'triangle';
+    lfo2.frequency.value = 4.0;
+    lfoGain2.gain.value = 180;
+
+    // Connect LFOs to oscillator pitch
+    lfo1.connect(lfoGain1);
+    lfoGain1.connect(osc1.frequency);
+    lfoGain1.connect(osc2.frequency);
+
+    lfo2.connect(lfoGain2);
+    lfoGain2.connect(osc1.frequency);
+
+    // Volume envelopes
+    const gain1 = ctx.createGain();
+    gain1.gain.setValueAtTime(0.65, now);
+    osc1.connect(gain1);
+    gain1.connect(masterGain);
+
+    const gain2 = ctx.createGain();
+    gain2.gain.setValueAtTime(0.40, now);
+    osc2.connect(gain2);
+    gain2.connect(masterGain);
+
+    // Start all nodes
+    osc1.start(now);
+    osc2.start(now);
+    lfo1.start(now);
+    lfo2.start(now);
+
+    this.activeNodes.push({ osc: osc1, gain: gain1 });
+    this.activeNodes.push({ osc: osc2, gain: gain2 });
+    this.activeNodes.push({ osc: lfo1, gain: lfoGain1 });
+    this.activeNodes.push({ osc: lfo2, gain: lfoGain2 });
+
+    // Vigorous emergency vibration cadence
     if ('vibrate' in navigator) {
-      navigator.vibrate([800, 200, 800, 200, 800, 200]);
+      navigator.vibrate([1000, 150, 1000, 150, 1000, 150]);
+      this.loopInterval = window.setInterval(() => {
+        if ('vibrate' in navigator) {
+          navigator.vibrate([1000, 150, 1000, 150, 1000, 150]);
+        }
+      }, 3600);
     }
   }
 
@@ -192,6 +237,7 @@ class AudioSynthesizer {
       navigator.vibrate([100, 50, 100]);
     }
   }
+
   public startRingtone(type: 'classic' | 'digital' | 'vibrate'): () => void {
     if (type === 'digital') {
       this.playDigitalMelody();
@@ -245,4 +291,3 @@ class AudioSynthesizer {
 }
 
 export const audioSynthesizer = new AudioSynthesizer();
-
