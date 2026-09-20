@@ -13,7 +13,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@raksha/shared": ["../shared/src/index.ts"],
